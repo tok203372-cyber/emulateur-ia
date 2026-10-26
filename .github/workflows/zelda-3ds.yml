@@ -37,6 +37,19 @@ jobs:
           export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
           make -C zelda-3ds/test -j4 2>&1 | tee test.log
 
+      - name: Sources externes (Dusklight, Aurora, fmt, Tracy)
+        run: |
+          set -o pipefail
+          bash zelda-3ds/outils/recuperer-sources.sh 2>&1 | tee sources.log
+
+      - name: Moteur graphique et démonstration
+        run: |
+          set -o pipefail
+          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
+          cmake -S zelda-3ds -B zelda-3ds/construction -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/3DS.cmake 2>&1 | tee moteur.log
+          # -k 0 : continuer après une erreur pour toutes les voir en une fois
+          cmake --build zelda-3ds/construction -j4 -- -k 0 2>&1 | tee -a moteur.log
+
       - name: Résumé des erreurs
         if: failure()
         run: |
@@ -53,6 +66,8 @@ jobs:
         run: |
           mkdir -p sortie
           cp zelda-3ds/test/zelda3ds-test.3dsx zelda-3ds/test/zelda3ds-test.elf zelda-3ds/test/zelda3ds-test.smdh sortie/
+          find zelda-3ds/construction -maxdepth 3 \( -name '*.3dsx' -o -name '*.elf' \) -exec cp {} sortie/ \;
+          $DEVKITARM/bin/arm-none-eabi-size sortie/*.elf || true
           ls -la sortie
 
       - uses: actions/upload-artifact@v7
@@ -109,14 +124,20 @@ jobs:
         run: |
           bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/zelda3ds-test.3dsx" "$PWD/fabrique/zelda3ds-test.cia" resultats/test 0C7E3000
 
+      - name: Essai de la démonstration du moteur
+        if: always()
+        timeout-minutes: 5
+        run: |
+          bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/demo-gx.3dsx" - resultats/demo - 30 zelda-3ds/demo-journal.txt
+
       - name: Résumé de l'essai
         if: always()
         run: |
-          for f in resultats/test/journal-*.txt; do
+          for f in resultats/*/journal-*.txt; do
             [ -f "$f" ] || continue
-            echo "::notice title=$(basename $f)::$(head -c 3000 "$f" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+            echo "::notice title=$(basename $(dirname $f))/$(basename $f)::$(head -c 3000 "$f" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')"
           done
-          ls -la resultats/test || true
+          ls -la resultats/* || true
 
       - name: Publier les résultats (branche resultats-3ds)
         if: always()
@@ -139,4 +160,5 @@ jobs:
           path: |
             fabrique/zelda3ds-test.3dsx
             fabrique/zelda3ds-test.cia
+            fabrique/demo-gx.3dsx
           if-no-files-found: error

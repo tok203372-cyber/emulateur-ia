@@ -1,0 +1,174 @@
+// Version 3DS de GXFrameBuffer d'Aurora : les copies de l'image vers une texture (GXCopyTex)
+// sont transmises au moteur gx3ds ; la copie vers l'écran est gérée par la boucle principale.
+#include "gx.hpp"
+#include "__gx.h"
+
+#include "../vi/vi_internal.hpp"
+
+#include <gx3ds/gx3ds.hpp>
+
+#include <algorithm>
+#include <cmath>
+
+namespace aurora::gx {
+void copy_tex(const void* dest, GXBool clear) noexcept {
+  // On mémorise la destination : une texture qui la lit est une copie de l'image.
+  g_gxState.copyTextures[dest] = GXState::CopyTextureRef{};
+  gx3ds::copier_vers_texture(dest, clear != GX_FALSE);
+}
+} // namespace aurora::gx
+
+extern "C" {
+GXRenderModeObj GXNtsc480IntDf = {
+    VI_TVMODE_NTSC_INT,
+    640,
+    480,
+    480,
+    40,
+    0,
+    640,
+    480,
+    VI_XFBMODE_DF,
+    0,
+    0,
+    {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6},
+    {8, 8, 10, 12, 10, 8, 8},
+};
+GXRenderModeObj GXNtsc480Int = {
+    VI_TVMODE_NTSC_INT,
+    640,
+    480,
+    480,
+    40,
+    0,
+    640,
+    480,
+    VI_XFBMODE_DF,
+    0,
+    0,
+    {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6},
+    {0, 0, 21, 22, 21, 0, 0},
+};
+GXRenderModeObj GXPal528IntDf = {
+    VI_TVMODE_PAL_INT,
+    704,
+    528,
+    480,
+    40,
+    0,
+    640,
+    480,
+    VI_XFBMODE_DF,
+    0,
+    0,
+    {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6},
+    {8, 8, 10, 12, 10, 8, 8},
+};
+GXRenderModeObj GXMpal480IntDf = {
+    VI_TVMODE_PAL_INT,
+    640,
+    480,
+    480,
+    40,
+    0,
+    640,
+    480,
+    VI_XFBMODE_DF,
+    0,
+    0,
+    {6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6},
+    {8, 8, 10, 12, 10, 8, 8},
+};
+
+void GXAdjustForOverscan(GXRenderModeObj* rmin, GXRenderModeObj* rmout, u16 hor, u16 ver) {
+  const GXRenderModeObj in = *rmin;
+  const u16 hor2 = hor * 2;
+  const u16 ver2 = ver * 2;
+  const u32 efbHeight = in.efbHeight;
+
+  *rmout = in;
+  rmout->fbWidth = in.fbWidth - hor2;
+  rmout->efbHeight = efbHeight - (ver2 * efbHeight) / in.xfbHeight;
+
+  if (in.xFBmode == VI_XFBMODE_SF && (in.viTVmode & 2) != 2) {
+    rmout->xfbHeight = in.xfbHeight - ver;
+  } else {
+    rmout->xfbHeight = in.xfbHeight - ver2;
+  }
+
+  rmout->viWidth = in.viWidth - hor2;
+  rmout->viHeight = in.viHeight - ver2;
+  rmout->viXOrigin = in.viXOrigin + hor;
+  rmout->viYOrigin = in.viYOrigin + ver;
+}
+
+void GXSetDispCopySrc(u16 left, u16 top, u16 wd, u16 ht) {}
+
+void GXSetTexCopySrc(u16 left, u16 top, u16 wd, u16 ht) {
+  GX_WRITE_AURORA(GX_AURORA_LOAD_COPY_SRC);
+  GX_WRITE_U32(left);
+  GX_WRITE_U32(top);
+  GX_WRITE_U32(wd);
+  GX_WRITE_U32(ht);
+}
+
+void GXSetDispCopyDst(u16 wd, u16 ht) {}
+
+void GXSetTexCopyDst(u16 wd, u16 ht, GXTexFmt fmt, GXBool mipmap) {
+  GX_WRITE_AURORA(GX_AURORA_LOAD_COPY_DST);
+  GX_WRITE_U32(wd);
+  GX_WRITE_U32(ht);
+  GX_WRITE_U32(fmt);
+  GX_WRITE_U8(mipmap != GX_FALSE);
+}
+
+// TODO GXSetDispCopyFrame2Field
+// TODO GXSetCopyClamp
+
+u32 GXSetDispCopyYScale(f32 vscale) { return 0; }
+
+void GXSetCopyClear(GXColor color, u32 depth) {
+  // BP 0x4F: clear color R + A
+  u32 reg0 = 0;
+  SET_REG_FIELD(0, reg0, 8, 0, color.r);
+  SET_REG_FIELD(0, reg0, 8, 8, color.a);
+  SET_REG_FIELD(0, reg0, 8, 24, 0x4F);
+  GX_WRITE_RAS_REG(reg0);
+
+  // BP 0x50: clear color B + G
+  u32 reg1 = 0;
+  SET_REG_FIELD(0, reg1, 8, 0, color.b);
+  SET_REG_FIELD(0, reg1, 8, 8, color.g);
+  SET_REG_FIELD(0, reg1, 8, 24, 0x50);
+  GX_WRITE_RAS_REG(reg1);
+
+  // BP 0x51: clear Z (24-bit)
+  u32 reg2 = 0;
+  SET_REG_FIELD(0, reg2, 24, 0, depth);
+  SET_REG_FIELD(0, reg2, 8, 24, 0x51);
+  GX_WRITE_RAS_REG(reg2);
+  __gx->bpSent = 1;
+}
+
+void GXSetCopyFilter(GXBool aa, u8 sample_pattern[12][2], GXBool vf, u8 vfilter[7]) {}
+
+void GXSetDispCopyGamma(GXGamma gamma) {}
+
+void GXCopyDisp(void* dest, GXBool clear) {}
+
+void GXCopyTex(void* dest, GXBool clear) {
+  GX_WRITE_AURORA(GX_AURORA_LOAD_COPY_DEST);
+  GX_WRITE_U64(reinterpret_cast<u64>(dest));
+
+  SET_REG_FIELD(0, __gx->cpTex, 1, 11, clear != GX_FALSE);
+  SET_REG_FIELD(0, __gx->cpTex, 1, 14, 0);
+  SET_REG_FIELD(0, __gx->cpTex, 8, 24, 0x52);
+  GX_WRITE_RAS_REG(__gx->cpTex);
+  aurora::gx::fifo::publish();
+}
+
+// TODO GXGetYScaleFactor
+// TODO GXGetNumXfbLines
+// TODO GXClearBoundingBox
+// TODO GXReadBoundingBox
+}

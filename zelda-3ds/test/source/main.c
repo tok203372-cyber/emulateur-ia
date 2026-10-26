@@ -132,8 +132,10 @@ static u32 plusGrosBlocMo(void) {
     u32 bas = 0, haut = 256;
     while (bas < haut) {
         u32 milieu = (bas + haut + 1) / 2;
-        void* p = malloc((size_t)milieu << 20);
+        // volatile : sinon le compilateur supprime la paire malloc/free inutilisée
+        char* volatile p = malloc((size_t)milieu << 20);
         if (p) {
+            p[0] = 1;
             free(p);
             bas = milieu;
         } else {

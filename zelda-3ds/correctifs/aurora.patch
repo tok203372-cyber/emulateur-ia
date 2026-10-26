@@ -1,0 +1,28 @@
+diff --git a/lib/gx/fifo.cpp b/lib/gx/fifo.cpp
+index bcaba60..7ffe6b2 100644
+--- a/lib/gx/fifo.cpp
++++ b/lib/gx/fifo.cpp
+@@ -24,7 +24,7 @@ uint32_t sDlWritePos = 0;
+ 
+ namespace {
+ constexpr Module Log{"aurora::gx::fifo"};
+-constexpr auto kProcessingMode = ProcessingMode::Thread;
++constexpr auto kProcessingMode = ProcessingMode::Drain;
+ constexpr uint32_t kDrawBatchSize = 1;
+ 
+ bool sFrameActive = false;
+diff --git a/lib/gx/regs.cpp b/lib/gx/regs.cpp
+index dcec16d..4a2ff9c 100644
+--- a/lib/gx/regs.cpp
++++ b/lib/gx/regs.cpp
+@@ -137,8 +137,8 @@ void bp_scissor(u8, u32) noexcept {
+   const s32 lf = static_cast<s32>(reg_get(scis0, 11, 12)) - 342;
+   const s32 bm = static_cast<s32>(reg_get(scis1, 11, 0)) - 342;
+   const s32 rt = static_cast<s32>(reg_get(scis1, 11, 12)) - 342;
+-  const s32 wd = std::max(rt - lf + 1, 0);
+-  const s32 ht = std::max(bm - tp + 1, 0);
++  const s32 wd = std::max<s32>(rt - lf + 1, 0);
++  const s32 ht = std::max<s32>(bm - tp + 1, 0);
+   set_logical_scissor({lf, tp, wd, ht});
+ }
+ 
