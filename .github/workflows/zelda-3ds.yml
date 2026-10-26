@@ -26,18 +26,25 @@ jobs:
 
       - name: Versions des outils
         run: |
-          echo "::notice title=Outils 3DS::$(arm-none-eabi-gcc --version | head -1) | $(dkp-pacman -Q 2>/dev/null | grep -E 'libctru|citro3d|citro2d|picasso|3dstools|tex3ds|devkitARM ' | tr '\n' ' ')"
+          echo "::notice title=Outils 3DS::$($DEVKITARM/bin/arm-none-eabi-gcc --version | head -1) | $(dkp-pacman -Q 2>/dev/null | grep -E 'libctru|citro3d|citro2d|picasso|3dstools|tex3ds|devkitARM ' | tr '\n' ' ')"
 
       - name: Programme de test
         run: |
           set -o pipefail
+          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
           make -C zelda-3ds/test -j4 2>&1 | tee test.log
 
       - name: Résumé des erreurs
         if: failure()
         run: |
-          grep -E "error|Error|undefined reference|No such file" *.log | head -60 > erreurs.txt || true
-          while IFS= read -r ligne; do echo "::error title=Erreur::${ligne//%/%25}"; done < erreurs.txt
+          { grep -E "error|Error|undefined reference|No such file|not found|\*\*\*" *.log | head -48; echo "--- fin du journal ---"; tail -n 24 *.log; } > erreurs.txt || true
+          python3 - <<'PY' || awk '{print "::error title=Erreur::" $0}' erreurs.txt
+          lignes = open("erreurs.txt", encoding="utf-8", errors="replace").read().splitlines()
+          def esc(t):
+              return t.replace("%", "%25").replace("\r", "").replace("\n", "")
+          for i in range(0, len(lignes), 6):
+              print("::error title=Erreur " + str(i // 6 + 1) + "::" + "%0A".join(esc(l) for l in lignes[i:i + 6]))
+          PY
 
       - name: Ranger les fichiers
         run: |
