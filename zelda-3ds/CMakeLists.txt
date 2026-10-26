@@ -11,6 +11,10 @@ if (NOT CMAKE_BUILD_TYPE)
   # optimisé, avec les informations de débogage (pour retrouver l'origine d'un plantage)
   set(CMAKE_BUILD_TYPE RelWithDebInfo)
 endif ()
+# Informations de débogage réduites (-g1 : noms des fonctions et numéros de ligne, assez pour
+# addr2line) : le fichier .elf du jeu reste petit et la fabrication plus rapide
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g1 -DNDEBUG")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g1 -DNDEBUG")
 
 option(ZELDA3DS_JEU "Fabriquer aussi le jeu (Dusklight), pas seulement le moteur et sa démonstration" ON)
 

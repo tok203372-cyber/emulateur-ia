@@ -75,6 +75,75 @@ index a078569052..ad697ebba9 100644
          }
          mActor->eventInfo.onCondition(2);
          return TRUE;
+diff --git a/src/dusk/OSThread.cpp b/src/dusk/OSThread.cpp
+index ac86a0ecce..2283c97768 100644
+--- a/src/dusk/OSThread.cpp
++++ b/src/dusk/OSThread.cpp
+@@ -18,6 +18,16 @@
+ 
+ #include "JSystem/JKernel/JKRHeap.h"
+ #include "common/TracySystem.hpp"
++
++#if DUSK_3DS
++// 3DS : fils créés par libctru (pile, priorité et cœur choisis), voir plateforme/fil3ds.hpp
++#include <fil3ds.hpp>
++using NativeThread = zelda3ds::Fil;
++#define DUSK_PREPARER_FIL(t) zelda3ds::preparer_fil((t)->priority, 0)
++#else
++using NativeThread = std::thread;
++#define DUSK_PREPARER_FIL(t) (void)0
++#endif
+ #include "dusk/main.h"
+ #include "dusk/os.h"
+ 
+@@ -33,7 +43,7 @@
+ // ============================================================================
+ 
+ struct PCThreadData {
+-    std::thread nativeThread;
++    NativeThread nativeThread;
+     std::mutex mtx;
+     std::condition_variable cv;
+     void* (*func)(void*);
+@@ -286,7 +296,8 @@ s32 OSResumeThread(OSThread* thread) {
+                 // First resume: launch the native thread
+                 data->started = true;
+                 data->suspended = false;
+-                data->nativeThread = std::thread(ThreadEntryWrapper, thread, data);
++                DUSK_PREPARER_FIL(thread);
++                data->nativeThread = NativeThread(ThreadEntryWrapper, thread, data);
+                 data->nativeThread.detach();
+                 OSReport("[PC-OSThread] Started thread %p\n", thread);
+             } else if (data->suspended) {
+@@ -351,7 +362,8 @@ s32 OSResumeThread(OSThread* thread) {
+                 // Unlock before launching to avoid potential deadlocks in thread initialization
+                 threadLock.unlock();
+ 
+-                data->nativeThread = std::thread(ThreadEntryWrapper, thread, data);
++                DUSK_PREPARER_FIL(thread);
++                data->nativeThread = NativeThread(ThreadEntryWrapper, thread, data);
+                 OSReport("[PC-OSThread] Started thread %p\n", thread);
+             } else {
+                 // Resume from suspension: signal the condition variable
+diff --git a/src/dusk/mods/loader/loader.cpp b/src/dusk/mods/loader/loader.cpp
+index 16e52f12da..7d371822aa 100644
+--- a/src/dusk/mods/loader/loader.cpp
++++ b/src/dusk/mods/loader/loader.cpp
+@@ -555,12 +555,14 @@ void ModLoader::flush_toasts() {
+ 
+     const auto names = std::exchange(m_pendingFailures, {});
+ 
++#if !DUSK_3DS  // 3DS : pas de fenêtres RmlUi
+     // Skip displaying toasts if the mods window is currently open
+     if (const auto* window = dynamic_cast<const ui::ModsWindow*>(ui::top_document())) {
+         if (window->visible()) {
+             return;
+         }
+     }
++#endif
+ 
+     ui::Toast toast{.type = "warning", .duration = std::chrono::seconds{5}};
+     if (names.size() == 1) {
 diff --git a/src/m_Do/m_Do_machine.cpp b/src/m_Do/m_Do_machine.cpp
 index 3d0acca1a9..6792c97c50 100644
 --- a/src/m_Do/m_Do_machine.cpp
@@ -98,10 +167,10 @@ index 3d0acca1a9..6792c97c50 100644
      arenaSize = 32 * 1024 * 1024;
      commandHeapSize *= 2;
 diff --git a/src/m_Do/m_Do_main.cpp b/src/m_Do/m_Do_main.cpp
-index e713e1308d..3789f8f3bc 100644
+index e713e1308d..c1bb3e622c 100644
 --- a/src/m_Do/m_Do_main.cpp
 +++ b/src/m_Do/m_Do_main.cpp
-@@ -542,6 +542,98 @@ static void mods_init(const std::filesystem::path& mods_dir) {
+@@ -542,6 +542,135 @@ static void mods_init(const std::filesystem::path& mods_dir) {
      dusk::mods::ModLoader::instance().init();
  }
  
@@ -112,13 +181,47 @@ index e713e1308d..3789f8f3bc 100644
 +// =========================================================================
 +#include <plateforme3ds.hpp>
 +
++// Boutons de la 3DS (SDL les nomme par position : EAST = A, SOUTH = B, NORTH = X, WEST = Y)
++// vers ceux de la manette GameCube. ZL/ZR (gâchettes analogiques) servent aussi de L/R.
++static constexpr PADDefaultMapping k3dsPadMapping = {
++    .buttons = {
++        {SDL_GAMEPAD_BUTTON_EAST, PAD_BUTTON_A},
++        {SDL_GAMEPAD_BUTTON_SOUTH, PAD_BUTTON_B},
++        {SDL_GAMEPAD_BUTTON_NORTH, PAD_BUTTON_X},
++        {SDL_GAMEPAD_BUTTON_WEST, PAD_BUTTON_Y},
++        {SDL_GAMEPAD_BUTTON_START, PAD_BUTTON_START},
++        {SDL_GAMEPAD_BUTTON_BACK, PAD_TRIGGER_Z},
++        {SDL_GAMEPAD_BUTTON_LEFT_SHOULDER, PAD_TRIGGER_L},
++        {SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, PAD_TRIGGER_R},
++        {SDL_GAMEPAD_BUTTON_DPAD_UP, PAD_BUTTON_UP},
++        {SDL_GAMEPAD_BUTTON_DPAD_DOWN, PAD_BUTTON_DOWN},
++        {SDL_GAMEPAD_BUTTON_DPAD_LEFT, PAD_BUTTON_LEFT},
++        {SDL_GAMEPAD_BUTTON_DPAD_RIGHT, PAD_BUTTON_RIGHT},
++    },
++    .axes = {
++        {{SDL_GAMEPAD_AXIS_LEFTX, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_LEFT_X_POS},
++        {{SDL_GAMEPAD_AXIS_LEFTX, AXIS_SIGN_NEGATIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_LEFT_X_NEG},
++        {{SDL_GAMEPAD_AXIS_LEFTY, AXIS_SIGN_NEGATIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_LEFT_Y_POS},
++        {{SDL_GAMEPAD_AXIS_LEFTY, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_LEFT_Y_NEG},
++        {{SDL_GAMEPAD_AXIS_RIGHTX, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_RIGHT_X_POS},
++        {{SDL_GAMEPAD_AXIS_RIGHTX, AXIS_SIGN_NEGATIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_RIGHT_X_NEG},
++        {{SDL_GAMEPAD_AXIS_RIGHTY, AXIS_SIGN_NEGATIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_RIGHT_Y_POS},
++        {{SDL_GAMEPAD_AXIS_RIGHTY, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_RIGHT_Y_NEG},
++        {{SDL_GAMEPAD_AXIS_LEFT_TRIGGER, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_TRIGGER_L},
++        {{SDL_GAMEPAD_AXIS_RIGHT_TRIGGER, AXIS_SIGN_POSITIVE}, SDL_GAMEPAD_BUTTON_INVALID, PAD_AXIS_TRIGGER_R},
++    },
++};
++
 +int game_main(int argc, char* argv[]) {
 +    if (mainCalled) {
 +        return 0;
 +    }
 +    mainCalled = true;
 +
++    // Tout (réglages, sauvegardes, journal) dans le dossier du jeu sur la carte SD
 +    borealis::cli::StandardOptions standardOptions;
++    standardOptions.userDir = zelda3ds::kDossier;
++    standardOptions.logDir = zelda3ds::kDossier;
 +    dusk::registerSettings();
 +    const auto dataPaths = dusk::data::initialize_data(standardOptions.userDir);
 +    dusk::ConfigPath = dataPaths.userPath;
@@ -156,6 +259,9 @@ index e713e1308d..3789f8f3bc 100644
 +                                " (formats acceptes : ISO, CISO, GCZ ; RVZ : convertir avec Dolphin).");
 +    }
 +    dusk::IsGameLaunched = true;
++
++    // Avant PADInit (appelé par mDoMch_Create dans main01)
++    PADSetDefaultMapping(&k3dsPadMapping, PAD_TYPE_STANDARD);
 +
 +    dusk::version::init();
 +    LanguageInit();
@@ -200,7 +306,7 @@ index e713e1308d..3789f8f3bc 100644
  // =========================================================================
  // PC ENTRY POINT
  // =========================================================================
-@@ -990,6 +1082,8 @@ int game_main(int argc, char* argv[]) {
+@@ -990,6 +1119,8 @@ int game_main(int argc, char* argv[]) {
      return 0;
  }
  

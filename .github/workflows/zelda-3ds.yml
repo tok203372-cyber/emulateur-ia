@@ -129,7 +129,7 @@ jobs:
         with:
           name: fabrique-3ds
           path: sortie/
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 3
 
   essayer:
@@ -164,8 +164,19 @@ jobs:
           $O/bannertool makesmdh -s "Crépuscule (test)" -l "Test de la fabrique 3DS" -p "emulateur-ia" -i zelda-3ds/cia/icone.png -o icone.icn
           $O/makerom -f cia -o fabrique/zelda3ds-test.cia -elf fabrique/zelda3ds-test.elf -rsf zelda-3ds/cia/application.rsf \
             -target t -exefslogo -icon icone.icn -banner banniere.bnr \
-            -DAPP_TITLE=CREPTEST -DAPP_PRODUCT_CODE=CTR-H-CRPT -DAPP_UNIQUE_ID=0xC7E30 -DAPP_ROMFS=romfs-test
+            -DAPP_TITLE=CREPTEST -DAPP_PRODUCT_CODE=CTR-H-CRPT -DAPP_UNIQUE_ID=0xC7E30 -DAPP_ROMFS=romfs-test -DAPP_MEMOIRE=124MB
           ls -la fabrique
+
+      - name: Fabriquer le CIA du jeu
+        if: ${{ hashFiles('fabrique/zelda3ds.elf') != '' }}
+        run: |
+          O=$PWD/outils
+          mkdir -p romfs-jeu && echo "Crepuscule" > romfs-jeu/lisezmoi.txt
+          $O/bannertool makesmdh -s "Crépuscule" -l "Twilight Princess (Dusklight) pour New 3DS" -p "emulateur-ia" -i zelda-3ds/cia/icone.png -o icone-jeu.icn
+          $O/makerom -f cia -o fabrique/zelda3ds.cia -elf fabrique/zelda3ds.elf -rsf zelda-3ds/cia/application.rsf \
+            -target t -exefslogo -icon icone-jeu.icn -banner banniere.bnr \
+            -DAPP_TITLE=CREPUSCULE -DAPP_PRODUCT_CODE=CTR-H-CRPS -DAPP_UNIQUE_ID=0xC7E31 -DAPP_ROMFS=romfs-jeu -DAPP_MEMOIRE=178MB
+          ls -la fabrique/zelda3ds.*
 
       - name: Préparer l'émulateur Azahar
         run: |
@@ -187,6 +198,14 @@ jobs:
         run: |
           bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/demo-gx.3dsx" - resultats/demo - 30 zelda-3ds/demo-journal.txt
 
+      - name: Essai du jeu sans disque (démarrage et message d'erreur)
+        if: ${{ !cancelled() && hashFiles('fabrique/zelda3ds.cia') != '' }}
+        timeout-minutes: 8
+        run: |
+          # .3dsx (mémoire par défaut de l'émulateur), puis le CIA installé (mode 178 Mo de la New 3DS)
+          bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/zelda3ds.3dsx" \
+            "$PWD/fabrique/zelda3ds.cia" resultats/jeu 0C7E3100 45 zelda-3ds/erreur.txt
+
       - name: Adresses des erreurs (addr2line)
         if: always()
         run: |
@@ -195,6 +214,7 @@ jobs:
             case $(basename "$d") in
               test) elf=fabrique/zelda3ds-test.elf ;;
               demo) elf=fabrique/demo-gx.elf ;;
+              jeu) elf=fabrique/zelda3ds.elf ;;
               *) continue ;;
             esac
             [ -f "$elf" ] || continue
@@ -239,7 +259,9 @@ jobs:
         with:
           name: Zelda-3DS-test
           path: |
+            fabrique/zelda3ds.3dsx
+            fabrique/zelda3ds.cia
             fabrique/zelda3ds-test.3dsx
             fabrique/zelda3ds-test.cia
             fabrique/demo-gx.3dsx
-          if-no-files-found: error
+          if-no-files-found: warn

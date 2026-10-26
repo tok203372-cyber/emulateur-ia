@@ -176,12 +176,14 @@ foreach (lib IN LISTS JSYSTEM_LIBRARIES)
 endforeach ()
 
 # Fichiers propres à Dusklight : on retire ce qui ne fonctionne pas sur 3DS (menus RmlUi,
-# chargement de modules natifs, WebGPU) ; des remplaçants sont dans plateforme/.
+# services de mods liés aux menus et à WebGPU, manifeste zstd) ; des remplaçants sont dans
+# plateforme/remplacants_dusk.cpp. (Les modules natifs sont compilés avec compat/dlfcn.h : leur
+# chargement échoue proprement.)
 set(DUSK_3DS ${DUSK_FILES})
 list(FILTER DUSK_3DS EXCLUDE REGEX "^src/dusk/ui/")
 list(REMOVE_ITEM DUSK_3DS
-    src/dusk/mods/loader/native_module.cpp
     src/dusk/mods/manifest.cpp
+    src/dusk/mods/svc/ui.cpp
     src/dusk/mods/svc/camera.cpp
     src/dusk/mods/svc/gfx.cpp
     src/dusk/imgui/ImGuiStateShare.cpp
@@ -205,11 +207,14 @@ set(FICHIERS_JEU
 )
 list(REMOVE_DUPLICATES FICHIERS_JEU)
 list(TRANSFORM FICHIERS_JEU PREPEND "${DUSK_DIR}/")
+# Remplaçants de parties de Dusklight : compilés comme les fichiers du jeu
+list(APPEND FICHIERS_JEU ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/remplacants_dusk.cpp)
 set_source_files_properties(${FICHIERS_JEU} PROPERTIES COMPILE_DEFINITIONS "NDEBUG=1;NDEBUG_DEFINED=1;DEBUG_DEFINED=0")
 
 file(GLOB PLATEFORME plateforme/*.cpp)
 list(REMOVE_ITEM PLATEFORME ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/aurora_jeu.cpp
-                            ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/borealis3ds.cpp)
+                            ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/borealis3ds.cpp
+                            ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/remplacants_dusk.cpp)
 
 # Les bibliothèques JSystem dépendent les unes des autres : ld doit les parcourir en groupe
 set(CMAKE_LINK_GROUP_USING_RESCAN "LINKER:--start-group" "LINKER:--end-group")

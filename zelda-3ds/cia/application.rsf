@@ -52,8 +52,9 @@ AccessControlInfo:
   RunnableOnSleep               : false
   SpecialMemoryArrange          : true
 
-  # New 3DS : 124 Mo de mémoire, processeur à 804 MHz, cache L2 et 3e cœur
-  SystemModeExt                 : 124MB
+  # New 3DS : mémoire (124MB pour le test, 178MB pour le jeu : le maximum), processeur à
+  # 804 MHz, cache L2 et 3e cœur
+  SystemModeExt                 : $(APP_MEMOIRE)
   CpuSpeed                      : 804MHz
   EnableL2Cache                 : true
   CanAccessCore2                : true
