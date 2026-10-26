@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
@@ -66,6 +67,10 @@ constexpr uint32_t MaxQuads = 16384;
 uint16_t* sIndices = nullptr;
 constexpr uint32_t MaxIndices = 256u * 1024u;
 uint32_t sPosIndices = 0;
+
+FonctionJournal sJournal = nullptr;
+uint32_t sJournalRestant = 0;
+uint32_t sNumeroDessin = 0;
 
 bool sInitialise = false;
 bool sImageEnCours = false;
@@ -737,6 +742,72 @@ void effacerZone(float x, float y, float l, float h, uint32_t couleurRgba, float
   C3D_DrawArrays(GPU_TRIANGLE_FAN, 0, 4);
 }
 
+// ----------------------------------------------------------------------------------------------
+// Diagnostic
+
+void journal(const char* fmt, ...) __attribute__((format(printf, 1, 2)));
+void journal(const char* fmt, ...) {
+  if (sJournal == nullptr) return;
+  char texte[320];
+  va_list ap;
+  va_start(ap, fmt);
+  vsnprintf(texte, sizeof texte, fmt, ap);
+  va_end(ap);
+  sJournal(texte);
+}
+
+const char* nomSource(GXColorSrc s) { return s == GX_SRC_VTX ? "sommet" : "registre"; }
+
+void decrireDessin(int prim, uint16_t n, GXVtxFmt fmt, const Preparation& p, const void* sortie) {
+  const auto& d = sDecodeur.disposition();
+  journal("dessin %lu : prim 0x%02X, %u sommets, format %d, matrice %lu", static_cast<unsigned long>(sNumeroDessin),
+          prim, n, static_cast<int>(fmt), static_cast<unsigned long>(g_gxState.currentPnMtx));
+  journal("  besoins : normale %d couleur %d textures %d (sources %d %d %d)", p.besoins.normale, p.besoins.couleur,
+          p.besoins.nbTex, p.besoins.sourceTex[0], p.besoins.sourceTex[1], p.besoins.sourceTex[2]);
+  journal("  sommet PICA : %u octets, pos %d nrm %d clr %d tex %d/%d/%d mtx %d", d.taille, d.pos, d.nrm, d.clr,
+          d.tex[0], d.tex[1], d.tex[2], d.mtx);
+  const auto& cc = g_gxState.colorChannelConfig[GX_COLOR0];
+  const auto& ca = g_gxState.colorChannelConfig[GX_ALPHA0];
+  const auto& sc = g_gxState.colorChannelState[GX_COLOR0];
+  journal("  canal 0 : %lu canaux, éclairage %d, matériau %s/%s, ambiante %s, atténuation %d, lumières %02lX",
+          static_cast<unsigned long>(g_gxState.numChans), cc.lightingEnabled, nomSource(cc.matSrc),
+          nomSource(ca.matSrc), nomSource(cc.ambSrc), static_cast<int>(cc.attnFn),
+          static_cast<unsigned long>(sc.lightMask.to_ulong()));
+  journal("  matériau (%.2f %.2f %.2f %.2f) ambiante (%.2f %.2f %.2f) ; booléens du shader %04X",
+          static_cast<double>(sc.matColor[0]), static_cast<double>(sc.matColor[1]),
+          static_cast<double>(sc.matColor[2]), static_cast<double>(sc.matColor[3]),
+          static_cast<double>(sc.ambColor[0]), static_cast<double>(sc.ambColor[1]),
+          static_cast<double>(sc.ambColor[2]), C3D_BoolUnifs[GPU_VERTEX_SHADER]);
+  const tev::Programme& prog = sDernierProgramme;
+  journal("  TEV : %lu étages GX -> %u étages PICA, approximé %d (raison %u), unités %d", 
+          static_cast<unsigned long>(g_gxState.numTevStages), prog.nb, prog.approxime, prog.raison, p.nbUnites);
+  for (int i = 0; i < prog.nb && i < 6; i++) {
+    const auto& e = prog.etages[i];
+    journal("    %d : rvb f%u src %X %X %X op %u %u %u x%u | a f%u src %X %X %X op %u %u %u x%u | k %08lX t%d%d", i,
+            e.fRvb, e.srcRvb[0], e.srcRvb[1], e.srcRvb[2], e.opRvb[0], e.opRvb[1], e.opRvb[2], 1u << e.echelleRvb,
+            e.fA, e.srcA[0], e.srcA[1], e.srcA[2], e.opA[0], e.opA[1], e.opA[2], 1u << e.echelleA,
+            static_cast<unsigned long>(e.constante), e.tamponRvb, e.tamponA);
+  }
+  const auto& vp = g_gxState.renderViewport;
+  const auto& sci = g_gxState.renderScissor;
+  journal("  affichage (%.0f %.0f %.0f %.0f, z %.2f..%.2f) ciseaux (%ld %ld %ld %ld) cull %d z %d/%d/%d mélange %d",
+          static_cast<double>(vp.left), static_cast<double>(vp.top), static_cast<double>(vp.width),
+          static_cast<double>(vp.height), static_cast<double>(vp.znear), static_cast<double>(vp.zfar),
+          static_cast<long>(sci.x), static_cast<long>(sci.y), static_cast<long>(sci.width),
+          static_cast<long>(sci.height), static_cast<int>(g_gxState.cullMode), g_gxState.depthCompare,
+          static_cast<int>(g_gxState.depthFunc), g_gxState.depthUpdate, static_cast<int>(g_gxState.blendMode));
+  if (sortie != nullptr && d.taille > 0) {
+    char hex[200];
+    int k = 0;
+    const auto* o = static_cast<const uint8_t*>(sortie);
+    for (int i = 0; i < d.taille && k < 190; i++) k += snprintf(hex + k, sizeof hex - k, "%02X", o[i]);
+    journal("  premier sommet : %s", hex);
+    const float* f = static_cast<const float*>(sortie);
+    journal("  position : %.3f %.3f %.3f", static_cast<double>(f[0]), static_cast<double>(f[1]),
+            static_cast<double>(f[2]));
+  }
+}
+
 uint32_t couleurEffacement() {
   const auto& c = g_gxState.clearColor;
   auto o = [](float f) { return static_cast<uint32_t>(std::lround(std::clamp(f, 0.f, 1.f) * 255.f)); };
@@ -758,6 +829,9 @@ void zone_ecran(float& x, float& y, float& largeur, float& hauteur) noexcept {
   hauteur = z.h;
 }
 const Stats& stats() noexcept { return sStatsAffichees; }
+
+void definir_journal(FonctionJournal fonction) noexcept { sJournal = fonction; }
+void journaliser_dessins(uint32_t nombre) noexcept { sJournalRestant = nombre; }
 
 void initialiser() noexcept {
   if (sInitialise) return;
@@ -864,7 +938,12 @@ void dessiner(GXPrimitive prim, GXVtxFmt fmt, uint16_t n, const uint8_t* donnees
   }
   Preparation p;
   void* sortie = nullptr;
+  sNumeroDessin++;
   if (!preparerDessin(fmt, n, donnees, p, sortie)) return;
+  if (sJournalRestant > 0) {
+    sJournalRestant--;
+    decrireDessin(prim, n, fmt, p, sortie);
+  }
   if (quads) {
     const uint32_t nbQuads = std::min<uint32_t>(n / 4, MaxQuads);
     if (nbQuads > 0) C3D_DrawElements(GPU_TRIANGLES, static_cast<int>(nbQuads * 6), C3D_UNSIGNED_SHORT, sIndicesQuads);
@@ -884,7 +963,12 @@ void dessiner_indexe(GXVtxFmt fmt, uint16_t nbSommets, const uint8_t* donnees, c
   }
   Preparation p;
   void* sortie = nullptr;
+  sNumeroDessin++;
   if (!preparerDessin(fmt, nbSommets, donnees, p, sortie)) return;
+  if (sJournalRestant > 0) {
+    sJournalRestant--;
+    decrireDessin(-1, nbSommets, fmt, p, sortie);
+  }
   uint16_t* dst = sIndices + sPosIndices;
   std::memcpy(dst, indices, nbIndices * sizeof(uint16_t));
   GSPGPU_FlushDataCache(dst, nbIndices * sizeof(uint16_t));

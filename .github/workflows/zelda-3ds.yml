@@ -130,6 +130,27 @@ jobs:
         run: |
           bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/demo-gx.3dsx" - resultats/demo - 30 zelda-3ds/demo-journal.txt
 
+      - name: Adresses des erreurs (addr2line)
+        if: always()
+        run: |
+          sudo apt-get install -y -qq binutils-arm-none-eabi > /dev/null || true
+          for d in resultats/*/; do
+            case $(basename "$d") in
+              test) elf=fabrique/zelda3ds-test.elf ;;
+              demo) elf=fabrique/demo-gx.elf ;;
+              *) continue ;;
+            esac
+            [ -f "$elf" ] || continue
+            for log in "$d"azahar-*.txt; do
+              [ -f "$log" ] || continue
+              grep -o "at PC 0x[0-9A-Fa-f]*" "$log" | awk '{print $3}' | sort | uniq -c | sort -rn | head -30 |
+                while read -r n pc; do
+                  echo "$n x $pc : $(arm-none-eabi-addr2line -f -C -i -p -e "$elf" "$pc" | tr '\n' ' ')"
+                done > "${log%.txt}-adresses.txt"
+              [ -s "${log%.txt}-adresses.txt" ] && head -c 2500 "${log%.txt}-adresses.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Accès mémoire invalides ('"$(basename "$d")"')::/'
+            done
+          done
+
       - name: Résumé de l'essai
         if: always()
         run: |
@@ -145,7 +166,7 @@ jobs:
           JETON: ${{ secrets.GITHUB_TOKEN }}
         run: |
           [ -d resultats ] || exit 0
-          cp fabrique/*.3dsx fabrique/*.cia resultats/ 2>/dev/null || true
+          cp fabrique/*.3dsx fabrique/*.cia fabrique/*.elf resultats/ 2>/dev/null || true
           cd resultats
           git init -q -b resultats-3ds
           git config user.name "github-actions[bot]"

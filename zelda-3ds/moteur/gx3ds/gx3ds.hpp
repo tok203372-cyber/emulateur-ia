@@ -58,4 +58,10 @@ struct Stats {
 };
 const Stats& stats() noexcept;
 
+// Journal de diagnostic : décrit en détail les prochains dessins (état GX, traduction pour la
+// PICA200, premier sommet), pour retrouver l'origine d'une erreur de rendu.
+using FonctionJournal = void (*)(const char* texte);
+void definir_journal(FonctionJournal fonction) noexcept;
+void journaliser_dessins(uint32_t nombre) noexcept;
+
 } // namespace gx3ds

@@ -366,6 +366,11 @@ int main() {
     hidScanInput();
     if (hidKeysDown() & KEY_START) break;
 
+    if (image == 60) {
+      // Description détaillée des 4 dessins de cette image (diagnostic)
+      gx3ds::definir_journal([](const char* texte) { journal("%s", texte); });
+      gx3ds::journaliser_dessins(4);
+    }
     gx3ds::debut_image();
     aurora::gx::fifo::begin_frame();
     sceneTriangle();
