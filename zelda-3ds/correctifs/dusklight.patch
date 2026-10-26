@@ -184,10 +184,10 @@ index 3d0acca1a9..6792c97c50 100644
      arenaSize = 32 * 1024 * 1024;
      commandHeapSize *= 2;
 diff --git a/src/m_Do/m_Do_main.cpp b/src/m_Do/m_Do_main.cpp
-index e713e1308d..c1bb3e622c 100644
+index e713e1308d..25523cd7d9 100644
 --- a/src/m_Do/m_Do_main.cpp
 +++ b/src/m_Do/m_Do_main.cpp
-@@ -542,6 +542,135 @@ static void mods_init(const std::filesystem::path& mods_dir) {
+@@ -542,6 +542,142 @@ static void mods_init(const std::filesystem::path& mods_dir) {
      dusk::mods::ModLoader::instance().init();
  }
  
@@ -245,7 +245,14 @@ index e713e1308d..c1bb3e622c 100644
 +    dusk::CachePath = dataPaths.cachePath;
 +    dusk::InitializeLogging(dusk::CachePath, standardOptions);
 +    log_build_info();
++    // Premier lancement (pas encore de réglages) : langue du jeu = langue de la console
++    // (versions européennes : anglais, allemand, français, espagnol, italien)
++    std::error_code erreurConfig;
++    const bool premierLancement = !std::filesystem::exists(dusk::ConfigPath / "config.json", erreurConfig);
 +    dusk::config::load_from_user_preferences();
++    if (premierLancement) {
++        dusk::getSettings().game.language.setValue(static_cast<dusk::GameLanguage>(zelda3ds::langue_console()));
++    }
 +
 +    {
 +        const auto userPathString = dusk::ConfigPath.u8string();
@@ -323,7 +330,7 @@ index e713e1308d..c1bb3e622c 100644
  // =========================================================================
  // PC ENTRY POINT
  // =========================================================================
-@@ -990,6 +1119,8 @@ int game_main(int argc, char* argv[]) {
+@@ -990,6 +1126,8 @@ int game_main(int argc, char* argv[]) {
      return 0;
  }
  

@@ -24,6 +24,10 @@ std::string chemin_disque();
 uint32_t taille_mem1();
 uint32_t taille_aram();
 
+// Langue de la console, en code de langue GameCube (OS_LANGUAGE_* : 0 anglais, 1 allemand,
+// 2 français, 3 espagnol, 4 italien) ; anglais pour les autres langues
+uint8_t langue_console();
+
 // Affiche un message d'erreur sur l'écran du bas, attend START, puis quitte le programme
 [[noreturn]] void erreur_fatale(const std::string& message);
 

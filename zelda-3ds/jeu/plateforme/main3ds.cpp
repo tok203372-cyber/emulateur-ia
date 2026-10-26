@@ -58,6 +58,21 @@ std::string chemin_disque() {
 uint32_t taille_mem1() { return 40u * 1024 * 1024; }
 uint32_t taille_aram() { return 16u * 1024 * 1024; }
 
+uint8_t langue_console() {
+  u8 langue = CFG_LANGUAGE_EN;
+  if (R_SUCCEEDED(cfguInit())) {
+    CFGU_GetSystemLanguage(&langue);
+    cfguExit();
+  }
+  switch (langue) {
+  case CFG_LANGUAGE_DE: return 1;
+  case CFG_LANGUAGE_FR: return 2;
+  case CFG_LANGUAGE_ES: return 3;
+  case CFG_LANGUAGE_IT: return 4;
+  default: return 0;
+  }
+}
+
 void erreur_fatale(const std::string& message) {
   std::printf("\n\x1b[31;1mErreur :\x1b[0m %s\n\nAppuyez sur START pour quitter.\n", message.c_str());
   std::fflush(stdout);
