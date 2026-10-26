@@ -32,7 +32,7 @@ sleep 2
 lancer() {
     local quoi=$1 nom=$2
     rm -f "$DONNEES/log/azahar_log.txt"
-    setsid "$APPRUN" "$quoi" > "$SORTIE/sortie-$nom.txt" 2>&1 &
+    setsid timeout -s KILL $((DUREE + 20)) "$APPRUN" "$quoi" > "$SORTIE/sortie-$nom.txt" 2>&1 &
     local pid=$!
     local pas=$((DUREE / 3))
     for i in 1 2 3; do
@@ -56,7 +56,7 @@ if [ "$FICHIER_3DSX" != "-" ]; then
 fi
 
 if [ "$FICHIER_CIA" != "-" ] && [ -n "$TITRE" ]; then
-    "$APPRUN" -i "$FICHIER_CIA" > "$SORTIE/installation-cia.txt" 2>&1 || true
+    timeout -s KILL 90 "$APPRUN" -i "$FICHIER_CIA" > "$SORTIE/installation-cia.txt" 2>&1 || echo "code de sortie : $?" >> "$SORTIE/installation-cia.txt"
     titre_bas=$(echo "$TITRE" | tr 'A-F' 'a-f')
     APP=$(find "$DONNEES" -path "*title/00040000/$titre_bas/content/*.app" | head -1)
     if [ -n "$APP" ]; then

@@ -105,6 +105,7 @@ jobs:
           ls squashfs-root/usr/bin
 
       - name: Essai dans l'émulateur
+        timeout-minutes: 8
         run: |
           bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/zelda3ds-test.3dsx" "$PWD/fabrique/zelda3ds-test.cia" resultats/test 0C7E3000
 
