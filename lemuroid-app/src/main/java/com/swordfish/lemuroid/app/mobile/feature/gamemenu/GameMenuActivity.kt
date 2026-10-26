@@ -42,6 +42,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.arcadia.changer.CatalogueJeux
+import com.swordfish.lemuroid.app.arcadia.changer.ChangerDeJeuScreen
+import com.swordfish.lemuroid.app.arcadia.changer.ChangerDeJeuViewModel
+import com.swordfish.lemuroid.app.arcadia.changer.ElementJeu
+import com.swordfish.lemuroid.app.arcadia.ia.Commande
+import com.swordfish.lemuroid.app.arcadia.ia.CommandeVocaleScreen
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import com.swordfish.lemuroid.app.mobile.feature.gamemenu.coreoptions.GameMenuCoreOptionsScreen
 import com.swordfish.lemuroid.app.mobile.feature.gamemenu.coreoptions.GameMenuCoreOptionsViewModel
 import com.swordfish.lemuroid.app.mobile.feature.gamemenu.states.GameMenuStatesScreen
@@ -52,6 +60,7 @@ import com.swordfish.lemuroid.app.shared.coreoptions.LemuroidCoreOption
 import com.swordfish.lemuroid.app.shared.input.InputDeviceManager
 import com.swordfish.lemuroid.common.kotlin.serializable
 import com.swordfish.lemuroid.lib.android.RetrogradeComponentActivity
+import com.swordfish.lemuroid.lib.library.db.RetrogradeDatabase
 import com.swordfish.lemuroid.lib.library.SystemCoreConfig
 import com.swordfish.lemuroid.lib.library.db.entity.Game
 import com.swordfish.lemuroid.lib.saves.StatesManager
@@ -70,6 +79,10 @@ class GameMenuActivity : RetrogradeComponentActivity() {
     @Inject
     lateinit var statesPreviewManager: StatesPreviewManager
 
+    // Arcadia : la bibliothèque, pour « Changer de jeu » et la commande vocale.
+    @Inject
+    lateinit var retrogradeDb: RetrogradeDatabase
+
     data class GameMenuRequest(
         val coreOptions: List<LemuroidCoreOption>,
         val advancedCoreOptions: List<LemuroidCoreOption>,
@@ -82,6 +95,7 @@ class GameMenuActivity : RetrogradeComponentActivity() {
         val currentDisk: Int,
         val currentTiltConfiguration: TiltConfiguration,
         val allTiltConfigurations: List<TiltConfiguration>,
+        val traductionActive: Boolean = false,
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -127,6 +141,8 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                     intent.serializable<Array<TiltConfiguration>>(GameMenuContract.EXTRA_TILT_ALL_CONFIGS)
                         ?.toList()
                         ?: emptyList(),
+                traductionActive =
+                    extras?.getBoolean(GameMenuContract.EXTRA_ARCADIA_TRADUCTION, false) ?: false,
             )
 
         setContent {
@@ -226,6 +242,29 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                             gameMenuRequest,
                         )
                     }
+                    composable(GameMenuRoute.SWITCH_GAME) {
+                        ChangerDeJeuScreen(
+                            viewModel(
+                                factory =
+                                    ChangerDeJeuViewModel.Factory(
+                                        applicationContext,
+                                        retrogradeDb,
+                                        gameMenuRequest.game.id,
+                                    ),
+                            ),
+                            onChoisir = { prochain ->
+                                onResult { putExtra(GameMenuContract.RESULT_SWITCH_GAME, prochain) }
+                            },
+                        )
+                    }
+                    composable(GameMenuRoute.VOICE) {
+                        val catalogue by produceState<List<ElementJeu>?>(null) {
+                            value = CatalogueJeux.charger(applicationContext, retrogradeDb, gameMenuRequest.game.id)
+                        }
+                        CommandeVocaleScreen { commande, _ ->
+                            executerCommande(commande, gameMenuRequest, catalogue)
+                        }
+                    }
                 }
             }
         }
@@ -255,6 +294,51 @@ class GameMenuActivity : RetrogradeComponentActivity() {
                 }
             }
         }
+    }
+
+    /** Exécute une commande vocale ; renvoie un message si elle n'a pas pu être exécutée. */
+    private fun executerCommande(
+        commande: Commande,
+        requete: GameMenuRequest,
+        catalogue: List<ElementJeu>?,
+    ): String? {
+        when (commande) {
+            is Commande.Sauvegarder ->
+                onResult {
+                    putExtra(GameMenuContract.RESULT_ARCADIA_ACTION, GameMenuContract.ACTION_SAUVEGARDER)
+                    commande.emplacement?.let { putExtra(GameMenuContract.RESULT_ARCADIA_EMPLACEMENT, it - 1) }
+                }
+            is Commande.Charger ->
+                onResult {
+                    putExtra(GameMenuContract.RESULT_ARCADIA_ACTION, GameMenuContract.ACTION_CHARGER)
+                    commande.emplacement?.let { putExtra(GameMenuContract.RESULT_ARCADIA_EMPLACEMENT, it - 1) }
+                }
+            Commande.Quitter -> onResult { putExtra(GameMenuContract.RESULT_QUIT, true) }
+            Commande.Recommencer -> onResult { putExtra(GameMenuContract.RESULT_RESET, true) }
+            Commande.AvanceRapide -> {
+                if (!requete.fastForwardSupported) return "L'avance rapide n'existe pas pour cette console."
+                onResult { putExtra(GameMenuContract.RESULT_ENABLE_FAST_FORWARD, !requete.fastForwardEnabled) }
+            }
+            Commande.CouperSon -> onResult { putExtra(GameMenuContract.RESULT_ENABLE_AUDIO, false) }
+            Commande.RemettreSon -> onResult { putExtra(GameMenuContract.RESULT_ENABLE_AUDIO, true) }
+            is Commande.Traduction -> onResult { putExtra(GameMenuContract.RESULT_ARCADIA_TRADUCTION, commande.active) }
+            Commande.LireEcran ->
+                onResult { putExtra(GameMenuContract.RESULT_ARCADIA_ACTION, GameMenuContract.ACTION_LIRE) }
+            is Commande.ChangerDeJeu -> {
+                val liste = catalogue ?: return "Un instant, je charge votre bibliothèque… Réessayez."
+                val trouve =
+                    CatalogueJeux.meilleur(liste, commande.nom)
+                        ?: return "Je n'ai pas trouvé de jeu qui s'appelle « ${commande.nom} »."
+                onResult { putExtra(GameMenuContract.RESULT_SWITCH_GAME, trouve.versProchain()) }
+            }
+            is Commande.Question ->
+                onResult {
+                    putExtra(GameMenuContract.RESULT_ARCADIA_ACTION, GameMenuContract.ACTION_ASSISTANT)
+                    putExtra(GameMenuContract.RESULT_ARCADIA_QUESTION, commande.texte)
+                }
+            Commande.Inconnue -> return "Je n'ai pas compris."
+        }
+        return null
     }
 
     private fun onResult(block: Intent.() -> Unit) {

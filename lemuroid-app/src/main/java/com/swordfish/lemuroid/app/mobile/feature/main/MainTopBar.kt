@@ -154,6 +154,17 @@ fun LemuroidTopBarActions(
                 )
             }
         }
+        // Arcadia : la recherche passe dans la barre du haut (l'onglet du bas est pris par « IA »).
+        if (route.showBottomNavigation && route != MainRoute.SEARCH) {
+            IconButton(
+                onClick = { navController.navigate(MainRoute.SEARCH.route) },
+            ) {
+                Icon(
+                    Icons.Default.Search,
+                    stringResource(R.string.title_search),
+                )
+            }
+        }
         if (route.showBottomNavigation) {
             IconButton(
                 onClick = { navController.navigate(MainRoute.SETTINGS.route) },

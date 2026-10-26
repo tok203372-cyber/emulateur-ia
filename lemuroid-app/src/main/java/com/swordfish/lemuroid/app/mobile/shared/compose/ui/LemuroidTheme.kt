@@ -73,6 +73,13 @@ private val DarkColorScheme =
         surfaceTint = md_theme_dark_surfaceTint,
         outlineVariant = md_theme_dark_outlineVariant,
         scrim = md_theme_dark_scrim,
+        surfaceBright = arcadia_surfaceBright,
+        surfaceDim = arcadia_surfaceDim,
+        surfaceContainerLowest = arcadia_surfaceContainerLowest,
+        surfaceContainerLow = arcadia_surfaceContainerLow,
+        surfaceContainer = arcadia_surfaceContainer,
+        surfaceContainerHigh = arcadia_surfaceContainerHigh,
+        surfaceContainerHighest = arcadia_surfaceContainerHighest,
     )
 
 @Composable
@@ -80,7 +87,8 @@ fun AppTheme(
     darkTheme: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    // Arcadia : toujours les couleurs d'Arcadia (pas celles du fond d'écran).
+    val dynamicColor = false && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
     val colors =
         when {
             dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current)

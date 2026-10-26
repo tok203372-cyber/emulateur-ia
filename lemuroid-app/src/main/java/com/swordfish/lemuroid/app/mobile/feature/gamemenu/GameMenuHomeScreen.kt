@@ -5,7 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Sensors
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Translate
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +35,74 @@ fun GameMenuHomeScreen(
     onResult: KFunction1<Intent.() -> Unit, Unit>,
 ) {
     Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
+        // Arcadia : changer de jeu et fonctions d'IA locale.
+        LemuroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.arcadia_menu_changer_titre)) },
+            subtitle = { Text(text = stringResource(id = R.string.arcadia_menu_changer_sous_titre)) },
+            icon = {
+                Icon(
+                    Icons.Filled.SwapHoriz,
+                    contentDescription = stringResource(id = R.string.arcadia_menu_changer_titre),
+                )
+            },
+            onClick = { navController.navigateToRoute(GameMenuRoute.SWITCH_GAME) },
+        )
+
+        LemuroidSettingsSwitch(
+            title = { Text(text = stringResource(id = R.string.arcadia_menu_traduction_titre)) },
+            subtitle = { Text(text = stringResource(id = R.string.arcadia_menu_traduction_sous_titre)) },
+            icon = {
+                Icon(
+                    Icons.Filled.Translate,
+                    contentDescription = stringResource(id = R.string.arcadia_menu_traduction_titre),
+                )
+            },
+            state = rememberMemoryBooleanSettingState(gameMenuRequest.traductionActive),
+            onCheckedChange = {
+                onResult { putExtra(GameMenuContract.RESULT_ARCADIA_TRADUCTION, it) }
+            },
+        )
+
+        LemuroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.arcadia_menu_lire_titre)) },
+            subtitle = { Text(text = stringResource(id = R.string.arcadia_menu_lire_sous_titre)) },
+            icon = {
+                Icon(
+                    Icons.Filled.RecordVoiceOver,
+                    contentDescription = stringResource(id = R.string.arcadia_menu_lire_titre),
+                )
+            },
+            onClick = {
+                onResult { putExtra(GameMenuContract.RESULT_ARCADIA_ACTION, GameMenuContract.ACTION_LIRE) }
+            },
+        )
+
+        LemuroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.arcadia_menu_voix_titre)) },
+            subtitle = { Text(text = stringResource(id = R.string.arcadia_menu_voix_sous_titre)) },
+            icon = {
+                Icon(
+                    Icons.Filled.Mic,
+                    contentDescription = stringResource(id = R.string.arcadia_menu_voix_titre),
+                )
+            },
+            onClick = { navController.navigateToRoute(GameMenuRoute.VOICE) },
+        )
+
+        LemuroidSettingsMenuLink(
+            title = { Text(text = stringResource(id = R.string.arcadia_menu_assistant_titre)) },
+            subtitle = { Text(text = stringResource(id = R.string.arcadia_menu_assistant_sous_titre)) },
+            icon = {
+                Icon(
+                    Icons.Filled.AutoAwesome,
+                    contentDescription = stringResource(id = R.string.arcadia_menu_assistant_titre),
+                )
+            },
+            onClick = {
+                onResult { putExtra(GameMenuContract.RESULT_ARCADIA_ACTION, GameMenuContract.ACTION_ASSISTANT) }
+            },
+        )
+
         if (gameMenuRequest.coreConfig.statesSupported) {
             LemuroidSettingsMenuLink(
                 title = { Text(text = stringResource(id = R.string.game_menu_save)) },

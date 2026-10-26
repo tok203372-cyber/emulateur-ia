@@ -7,6 +7,8 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import com.swordfish.lemuroid.R
+import com.swordfish.lemuroid.app.arcadia.Enchainement
+import com.swordfish.lemuroid.app.arcadia.ProchainJeu
 import com.swordfish.lemuroid.app.shared.ImmersiveActivity
 import com.swordfish.lemuroid.app.shared.library.PendingOperationsMonitor
 import com.swordfish.lemuroid.app.shared.main.GameLaunchTaskHandler
@@ -128,13 +130,31 @@ class ExternalGameLauncherActivity : ImmersiveActivity() {
         when (requestCode) {
             BaseGameActivity.REQUEST_PLAY_GAME -> {
                 val isLeanback = data?.extras?.getBoolean(BaseGameActivity.PLAY_GAME_RESULT_LEANBACK) == true
+                // Arcadia : un autre jeu a été choisi dans le menu en jeu.
+                val prochain = ProchainJeu.depuis(data)?.takeIf { resultCode == RESULT_OK }
 
                 GlobalScope.safeLaunch {
                     if (isLeanback) {
                         ChannelUpdateWork.enqueue(applicationContext)
                     }
                     gameLaunchTaskHandler.handleGameFinish(false, this@ExternalGameLauncherActivity, resultCode, data)
-                    finish()
+                    if (prochain == null) finish()
+                }
+
+                if (prochain != null) {
+                    lifecycleScope.launch {
+                        Enchainement.lancer(this@ExternalGameLauncherActivity, prochain, retrogradeDatabase) { jeu ->
+                            val lance =
+                                gameLauncher.launchGameAsync(
+                                    this@ExternalGameLauncherActivity,
+                                    jeu,
+                                    true,
+                                    TVHelper.isTV(applicationContext),
+                                )
+                            if (!lance) finish()
+                        }
+                        if (prochain is ProchainJeu.Externe) finish()
+                    }
                 }
             }
         }

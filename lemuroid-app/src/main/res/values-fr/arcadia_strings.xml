@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Arcadia : menu en jeu -->
+    <string name="arcadia_menu_changer_titre">Changer de jeu ou de console</string>
+    <string name="arcadia_menu_changer_sous_titre">Sauvegarde automatique, puis un autre jeu</string>
+    <string name="arcadia_menu_voix_titre">Commande vocale</string>
+    <string name="arcadia_menu_voix_sous_titre">Sauvegarder, traduire, changer de jeu… à la voix</string>
+    <string name="arcadia_menu_traduction_titre">Traduction en direct (IA)</string>
+    <string name="arcadia_menu_traduction_sous_titre">Traduit les textes du jeu à l’écran, hors ligne</string>
+    <string name="arcadia_menu_lire_titre">Lire l’écran à voix haute</string>
+    <string name="arcadia_menu_lire_sous_titre">Lit (et traduit) le texte visible</string>
+    <string name="arcadia_menu_assistant_titre">Assistant de jeu IA</string>
+    <string name="arcadia_menu_assistant_sous_titre">Demandez de l’aide : l’IA voit votre écran</string>
+
+    <!-- Arcadia : écrans principaux -->
+    <string name="arcadia_titre_plus">Plus de consoles</string>
+    <string name="arcadia_titre_ia">Arcadia IA</string>
+    <string name="arcadia_onglet_plus">Plus</string>
+    <string name="arcadia_onglet_ia">IA</string>
+    <string name="arcadia_contexte_presenter">Présenter ce jeu (IA)</string>
+</resources>

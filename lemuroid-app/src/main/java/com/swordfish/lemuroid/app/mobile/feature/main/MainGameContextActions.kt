@@ -25,6 +25,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AppShortcut
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
@@ -76,6 +77,7 @@ fun MainGameContextActions(
     onClearCustomName: (Game) -> Unit,
     onSetCustomCoverUri: (Game, String) -> Unit,
     onClearCustomCoverUri: (Game) -> Unit,
+    onAskAI: ((Game) -> Unit)? = null,
 ) {
     val modalSheetState = rememberModalBottomSheetState(true)
     val selectedGame = selectedGameState.value
@@ -105,6 +107,7 @@ fun MainGameContextActions(
                 onClearCustomName = onClearCustomName,
                 onSetCustomCoverUri = onSetCustomCoverUri,
                 onClearCustomCoverUri = onClearCustomCoverUri,
+                onAskAI = onAskAI,
             )
         }
     }
@@ -123,6 +126,7 @@ private fun ContextActionContent(
     onClearCustomName: (Game) -> Unit,
     onSetCustomCoverUri: (Game, String) -> Unit,
     onClearCustomCoverUri: (Game) -> Unit,
+    onAskAI: ((Game) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     var showCustomNameDialog by remember { mutableStateOf(false) }
@@ -169,6 +173,17 @@ private fun ContextActionContent(
                 selectedGameState.value = null
             },
         )
+
+        if (onAskAI != null) {
+            ContextActionEntry(
+                label = stringResource(id = R.string.arcadia_contexte_presenter),
+                icon = Icons.Default.AutoAwesome,
+                onClick = {
+                    onAskAI(selectedGame)
+                    selectedGameState.value = null
+                },
+            )
+        }
 
         if (selectedGame.isFavorite) {
             ContextActionEntry(

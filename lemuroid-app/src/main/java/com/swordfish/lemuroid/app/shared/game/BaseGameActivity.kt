@@ -12,6 +12,12 @@ import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import android.widget.Toast
+import com.swordfish.lemuroid.app.arcadia.ProchainJeu
+import com.swordfish.lemuroid.app.arcadia.ia.CaptureJeu
+import com.swordfish.lemuroid.app.arcadia.ia.CompagnonIA
+import com.swordfish.lemuroid.app.arcadia.ia.TraductionEnDirect
+import com.swordfish.libretrodroid.GLRetroView
 import com.swordfish.lemuroid.app.mobile.feature.game.GameActivity
 import com.swordfish.lemuroid.app.mobile.feature.game.GameService
 import com.swordfish.lemuroid.app.mobile.feature.settings.SettingsManager
@@ -88,6 +94,9 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     private val startGameTime = System.currentTimeMillis()
     private var finishTriggered = false
+
+    // Arcadia : jeu à lancer juste après celui-ci (« Changer de jeu »).
+    private var prochainJeu: ProchainJeu? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -214,6 +223,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                     GameMenuContract.EXTRA_FAST_FORWARD,
                     (baseGameScreenViewModel.retroGameView.retroGameView?.frameSpeed ?: 1) > 1,
                 )
+                this.putExtra(GameMenuContract.EXTRA_ARCADIA_TRADUCTION, TraductionEnDirect.estActive)
                 this.putExtra(GameMenuContract.EXTRA_CURRENT_TILT_CONFIG, currentTiltConfiguration)
                 // TODO PADS... Make sure to avoid passing this if a physical pad is connected.
                 this.putExtra(GameMenuContract.EXTRA_TILT_ALL_CONFIGS, tiltConfigurations.toTypedArray())
@@ -302,6 +312,7 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 putExtra(PLAY_GAME_RESULT_SESSION_DURATION, System.currentTimeMillis() - startGameTime)
                 putExtra(PLAY_GAME_RESULT_GAME, intent.getSerializableExtra(EXTRA_GAME))
                 putExtra(PLAY_GAME_RESULT_LEANBACK, intent.getBooleanExtra(EXTRA_LEANBACK, false))
+                prochainJeu?.let { putExtra(ProchainJeu.EXTRA, it) }
             }
 
         setResult(RESULT_OK, resultIntent)
@@ -352,9 +363,77 @@ abstract class BaseGameActivity : ImmersiveActivity() {
 
     override fun onDestroy() {
         if (!isChangingConfigurations) {
+            TraductionEnDirect.fermer()
             GameService.requestTermination()
         }
         super.onDestroy()
+    }
+
+    // ----- Arcadia -----
+
+    private fun vueJeu(): GLRetroView? = baseGameScreenViewModel.retroGameView.retroGameView
+
+    private fun basculerTraduction(active: Boolean) {
+        if (active) {
+            TraductionEnDirect.demarrer(this, applicationContext) { vueJeu() }
+        } else {
+            TraductionEnDirect.arreter()
+        }
+    }
+
+    private fun lireEcran() {
+        lifecycleScope.launch {
+            // Laisse le jeu réafficher son image après la fermeture du menu.
+            delay(350)
+            TraductionEnDirect.lireUneFois(this@BaseGameActivity, applicationContext, vueJeu())
+        }
+    }
+
+    private fun ouvrirAssistant(question: String?) {
+        lifecycleScope.launch {
+            delay(350)
+            val capture = vueJeu()?.let { CaptureJeu.capturer(it, 1024) }
+            val fichier = capture?.let { runCatching { CaptureJeu.enregistrer(applicationContext, it.image) }.getOrNull() }
+            val texte = capture?.let { TraductionEnDirect.texteVisible(applicationContext, it.image) }
+            capture?.image?.recycle()
+            CompagnonIA.ouvrirAssistant(
+                activity = this@BaseGameActivity,
+                titreJeu = game.displayName(),
+                console = runCatching { getString(system.titleResId) }.getOrNull(),
+                texteEcran = texte,
+                question = question,
+                image = fichier,
+            )
+        }
+    }
+
+    private fun executerActionArcadia(data: Intent) {
+        val emplacement =
+            if (data.hasExtra(GameMenuContract.RESULT_ARCADIA_EMPLACEMENT)) {
+                data.getIntExtra(GameMenuContract.RESULT_ARCADIA_EMPLACEMENT, 0).coerceIn(0, 3)
+            } else {
+                null
+            }
+        when (data.getStringExtra(GameMenuContract.RESULT_ARCADIA_ACTION)) {
+            GameMenuContract.ACTION_SAUVEGARDER -> {
+                if (emplacement != null) {
+                    GlobalScope.launch { baseGameScreenViewModel.saveSlot(emplacement) }
+                    Toast.makeText(this, "Sauvegarde dans l'emplacement ${emplacement + 1}", Toast.LENGTH_SHORT).show()
+                } else {
+                    baseGameScreenViewModel.saveQuickSave()
+                }
+            }
+            GameMenuContract.ACTION_CHARGER -> {
+                if (emplacement != null) {
+                    GlobalScope.launch { baseGameScreenViewModel.loadSlot(emplacement) }
+                } else {
+                    baseGameScreenViewModel.loadQuickSave()
+                }
+            }
+            GameMenuContract.ACTION_LIRE -> lireEcran()
+            GameMenuContract.ACTION_ASSISTANT ->
+                ouvrirAssistant(data.getStringExtra(GameMenuContract.RESULT_ARCADIA_QUESTION))
+        }
     }
 
     override fun onActivityResult(
@@ -412,6 +491,20 @@ abstract class BaseGameActivity : ImmersiveActivity() {
             if (data?.hasExtra(GameMenuContract.RESULT_CHANGE_TILT_CONFIG) == true) {
                 val tiltConfig = data.serializable<TiltConfiguration>(GameMenuContract.RESULT_CHANGE_TILT_CONFIG)
                 baseGameScreenViewModel.changeTiltConfiguration(tiltConfig!!)
+            }
+            // Arcadia
+            if (data?.hasExtra(GameMenuContract.RESULT_ARCADIA_TRADUCTION) == true) {
+                basculerTraduction(data.getBooleanExtra(GameMenuContract.RESULT_ARCADIA_TRADUCTION, false))
+            }
+            if (data?.hasExtra(GameMenuContract.RESULT_ARCADIA_ACTION) == true) {
+                executerActionArcadia(data)
+            }
+            if (data?.hasExtra(GameMenuContract.RESULT_SWITCH_GAME) == true) {
+                val prochain = data.serializable<ProchainJeu>(GameMenuContract.RESULT_SWITCH_GAME)
+                if (prochain != null) {
+                    prochainJeu = prochain
+                    baseGameScreenViewModel.requestFinish()
+                }
             }
         }
     }

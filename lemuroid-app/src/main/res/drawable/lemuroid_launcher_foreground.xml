@@ -1,75 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône d'Arcadia : une manette et une étincelle (l'IA). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="127.064445"
-    android:viewportHeight="127.064445">
-  <group android:translateX="6.3532224"
-      android:translateY="6.3532224">
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Ombre douce -->
     <path
-        android:pathData="M37.671,57.065m-12.926,0a12.926,12.926 0,1 1,25.852 0a12.926,12.926 0,1 1,-25.852 0"
-        android:strokeWidth="1.11160922"
-        android:fillColor="#000000"
-        android:fillType="evenOdd"
-        android:fillAlpha="1"/>
+        android:fillColor="#33000000"
+        android:pathData="M38,47H70A12,12 0,0 1,82 59A12,12 0,0 1,70 71H38A12,12 0,0 1,26 59A12,12 0,0 1,38 47Z" />
     <path
-        android:pathData="M76.47,57.065m-12.926,0a12.926,12.926 0,1 1,25.852 0a12.926,12.926 0,1 1,-25.852 0"
-        android:fillColor="#000000"
-        android:fillAlpha="1"
-        android:fillType="evenOdd"/>
+        android:fillColor="#33000000"
+        android:pathData="M36,69m-11,0a11,11 0,1 0,22 0a11,11 0,1 0,-22 0" />
     <path
-        android:pathData="m74.169,52.749c0,-1.267 1.024,-2.298 2.295,-2.298 1.27,0 2.293,1.031 2.293,2.298 0,1.269 -1.022,2.299 -2.293,2.299C75.193,55.047 74.169,54.018 74.169,52.749Z"
-        android:strokeWidth="0.66750008"
-        android:fillColor="#ffffff"
-        android:strokeColor="#00000000"
-        android:fillAlpha="1"
-        android:fillType="evenOdd"/>
+        android:fillColor="#33000000"
+        android:pathData="M72,69m-11,0a11,11 0,1 0,22 0a11,11 0,1 0,-22 0" />
+    <!-- Corps de la manette -->
     <path
-        android:pathData="m74.169,60.613c0,-1.267 1.024,-2.298 2.295,-2.298 1.27,0 2.293,1.031 2.293,2.298 0,1.269 -1.022,2.299 -2.293,2.299 -1.271,-0.001 -2.295,-1.03 -2.295,-2.299z"
-        android:strokeWidth="0.66750008"
-        android:fillColor="#ffffff"
-        android:strokeColor="#00000000"
-        android:fillAlpha="1"
-        android:fillType="evenOdd"/>
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M38,44H70A12,12 0,0 1,82 56A12,12 0,0 1,70 68H38A12,12 0,0 1,26 56A12,12 0,0 1,38 44Z" />
     <path
-        android:pathData="m78.185,56.748c0,-1.267 1.024,-2.298 2.295,-2.298 1.27,0 2.293,1.031 2.293,2.298 0,1.269 -1.022,2.299 -2.293,2.299 -1.271,-0.001 -2.295,-1.03 -2.295,-2.299z"
-        android:strokeWidth="0.66750008"
-        android:fillColor="#ffffff"
-        android:strokeColor="#00000000"
-        android:fillAlpha="1"
-        android:fillType="evenOdd"/>
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,66m-11,0a11,11 0,1 0,22 0a11,11 0,1 0,-22 0" />
     <path
-        android:pathData="m70.154,56.748c0,-1.267 1.024,-2.298 2.295,-2.298 1.27,0 2.293,1.031 2.293,2.298 0,1.269 -1.022,2.299 -2.293,2.299C71.178,59.046 70.154,58.017 70.154,56.748Z"
-        android:strokeWidth="0.66750008"
-        android:fillColor="#ffffff"
-        android:strokeColor="#00000000"
-        android:fillAlpha="1"
-        android:fillType="evenOdd"/>
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M72,66m-11,0a11,11 0,1 0,22 0a11,11 0,1 0,-22 0" />
+    <!-- Croix directionnelle -->
     <path
-        android:pathData="m66.69,77.868c0,4.554 -3.692,8.246 -8.246,8.246h-2.506c-4.553,0 -8.246,-3.692 -8.246,-8.246v0c0,-4.554 3.693,-8.246 8.246,-8.246h2.506c4.554,0 8.246,3.692 8.246,8.246z"
-        android:strokeAlpha="0.5"
-        android:strokeWidth="1.11160922"
-        android:fillColor="#ffffff"
-        android:fillType="evenOdd"
-        android:fillAlpha="0.5"/>
+        android:fillColor="#FF3A1E8C"
+        android:pathData="M35,51h4v4h4v4h-4v4h-4v-4h-4v-4h4z" />
+    <!-- Boutons -->
     <path
-        android:pathData="m52.039,76.689c-0.794,-0.93 -0.441,-1.691 0.78,-1.691l8.512,0c1.223,0 1.574,0.761 0.78,1.692l-3.594,4.213c-0.794,0.93 -2.092,0.93 -2.886,0z"
-        android:strokeAlpha="0.5"
-        android:fillColor="#000000"
-        android:fillAlpha="0.5"
-        android:fillType="evenOdd"/>
+        android:fillColor="#FFFF5FA2"
+        android:pathData="M71,51m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
     <path
-        android:pathData="M35.54,51.05l3.999,0l0,11.998l-3.999,0z"
-        android:strokeAlpha="1"
-        android:strokeWidth="0"
-        android:fillColor="#ffffff"
-        android:fillAlpha="1"
-        android:strokeColor="#00000000"/>
+        android:fillColor="#FF4FE3D0"
+        android:pathData="M77,57m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
     <path
-        android:pathData="M43.539,55.05l-0,3.999l-11.998,0l-0,-3.999z"
-        android:strokeAlpha="1"
-        android:strokeWidth="0"
-        android:fillColor="#ffffff"
-        android:fillAlpha="1"
-        android:strokeColor="#00000000"/>
-  </group>
+        android:fillColor="#FFFFD166"
+        android:pathData="M65,57m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path
+        android:fillColor="#FF7B4DFF"
+        android:pathData="M71,63m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <!-- Étincelle de l'IA -->
+    <path
+        android:fillColor="#FFFFD166"
+        android:pathData="M70,25C71,30.5 72.5,32 78,33C72.5,34 71,35.5 70,41C69,35.5 67.5,34 62,33C67.5,32 69,30.5 70,25Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M58,26C58.5,28.3 59.2,29 61.5,29.5C59.2,30 58.5,30.7 58,33C57.5,30.7 56.8,30 54.5,29.5C56.8,29 57.5,28.3 58,26Z" />
 </vector>

@@ -26,6 +26,41 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
 
+    <!-- Arcadia : savoir quels émulateurs externes et quelle appli d'IA sont installés,
+         et utiliser la reconnaissance vocale et la synthèse vocale du téléphone. -->
+    <queries>
+        <package android:name="org.dolphinemu.dolphinemu" />
+        <package android:name="org.dolphinemu.mmjr" />
+        <package android:name="org.dolphinemu.mmjr3" />
+        <package android:name="com.armsx2" />
+        <package android:name="come.nanodata.armsx2" />
+        <package android:name="xyz.aethersx2.android" />
+        <package android:name="xyz.aethersx2.tturnip" />
+        <package android:name="com.flycast.emulator" />
+        <package android:name="io.recompiled.redream" />
+        <package android:name="org.devmiyax.yabasanshioro2.pro" />
+        <package android:name="org.devmiyax.yabasanshioro2" />
+        <package android:name="org.azahar_emu.azahar" />
+        <package android:name="io.github.lime3ds.android" />
+        <package android:name="info.cemu.cemu" />
+        <package android:name="dev.eden.eden_emulator" />
+        <package android:name="org.citron.citron_emu" />
+        <package android:name="org.sudachi.sudachi_emu" />
+        <package android:name="org.kenjinx.android" />
+        <package android:name="aenu.aps3e" />
+        <package android:name="app.arcadia.ia" />
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="application/octet-stream" />
+        </intent>
+    </queries>
+
     <application
         android:name="com.swordfish.lemuroid.app.LemuroidApplication"
         android:allowBackup="true"
@@ -154,6 +189,17 @@
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove" />
+
+        <!-- Arcadia : partage de la capture d'écran avec l'application Arcadia IA. -->
+        <provider
+            android:name="com.swordfish.lemuroid.app.arcadia.ArcadiaFichiers"
+            android:authorities="${applicationId}.arcadia.fichiers"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/arcadia_fichiers" />
+        </provider>
 
     </application>
 

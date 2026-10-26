@@ -26,6 +26,21 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.fredporciuncula.flow.preferences.FlowSharedPreferences
 import com.swordfish.lemuroid.R
+import android.widget.Toast
+import androidx.lifecycle.lifecycleScope
+import com.swordfish.lemuroid.app.arcadia.Enchainement
+import com.swordfish.lemuroid.app.arcadia.ProchainJeu
+import com.swordfish.lemuroid.app.arcadia.changer.CatalogueJeux
+import com.swordfish.lemuroid.app.arcadia.externe.BibliothequeExterne
+import com.swordfish.lemuroid.app.arcadia.externe.ConsolesPlusScreen
+import com.swordfish.lemuroid.app.arcadia.externe.ConsolesPlusViewModel
+import com.swordfish.lemuroid.app.arcadia.externe.JeuExterne
+import com.swordfish.lemuroid.app.arcadia.externe.LanceurExterne
+import com.swordfish.lemuroid.app.arcadia.ia.ArcadiaIAScreen
+import com.swordfish.lemuroid.app.arcadia.ia.ArcadiaIAViewModel
+import com.swordfish.lemuroid.app.arcadia.ia.CompagnonIA
+import com.swordfish.lemuroid.lib.library.GameSystem
+import kotlinx.coroutines.launch
 import com.swordfish.lemuroid.app.mobile.feature.favorites.FavoritesScreen
 import com.swordfish.lemuroid.app.mobile.feature.favorites.FavoritesViewModel
 import com.swordfish.lemuroid.app.mobile.feature.games.GamesScreen
@@ -262,6 +277,28 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                             onGameFavoriteToggle = onGameFavoriteToggle,
                         )
                     }
+                    composable(MainRoute.PLUS) {
+                        ConsolesPlusScreen(
+                            modifier = Modifier.padding(padding),
+                            viewModel =
+                                viewModel(
+                                    factory = ConsolesPlusViewModel.Factory(applicationContext),
+                                ),
+                            onJouer = { jeu -> lancerJeuExterne(jeu) },
+                        )
+                    }
+                    composable(MainRoute.IA) {
+                        ArcadiaIAScreen(
+                            modifier = Modifier.padding(padding),
+                            viewModel =
+                                viewModel(
+                                    factory = ArcadiaIAViewModel.Factory(applicationContext),
+                                ),
+                            onDiscuter = { CompagnonIA.ouvrirAccueil(this@MainActivity) },
+                            onQueJouer = { demanderRecommandation() },
+                            onReglagesManettes = { navController.navigateToRoute(MainRoute.SETTINGS_INPUT_DEVICES) },
+                        )
+                    }
                     composable(MainRoute.SETTINGS) {
                         SettingsScreen(
                             modifier = Modifier.padding(padding),
@@ -360,6 +397,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 onClearCustomName = { game -> gameInteractor.onClearCustomName(game) },
                 onSetCustomCoverUri = { game, uri -> gameInteractor.onSetCustomCoverUri(game, uri) },
                 onClearCustomCoverUri = { game -> gameInteractor.onClearCustomCoverUri(game) },
+                onAskAI = { game -> presenterJeu(game) },
             )
 
             if (infoDialogDisplayed.value) {
@@ -403,8 +441,83 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                         data,
                     )
                 }
+                // Arcadia : « Changer de jeu » depuis le menu en jeu.
+                val prochain = ProchainJeu.depuis(data)
+                if (prochain != null && resultCode == Activity.RESULT_OK) {
+                    lifecycleScope.launch {
+                        Enchainement.lancer(this@MainActivity, prochain, retrogradeDb) { jeu ->
+                            gameInteractor.onGamePlay(jeu)
+                        }
+                    }
+                }
+            }
+            CompagnonIA.DEMANDE_RECOMMANDATION -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    lancerDepuisCle(data?.getStringExtra(CompagnonIA.RESULTAT_CLE_JEU))
+                }
             }
         }
+    }
+
+    // ----- Arcadia -----
+
+    private fun lancerJeuExterne(jeu: JeuExterne) {
+        val resultat = LanceurExterne.lancer(this, jeu)
+        if (resultat is LanceurExterne.Resultat.Lance) {
+            lifecycleScope.launch { BibliothequeExterne.obtenir(applicationContext).noterPartie(jeu) }
+        } else {
+            LanceurExterne.expliquer(this, resultat)
+        }
+    }
+
+    private fun demanderRecommandation() {
+        lifecycleScope.launch {
+            val jeux = CatalogueJeux.charger(applicationContext, retrogradeDb)
+            if (jeux.isEmpty()) {
+                Toast.makeText(
+                    this@MainActivity,
+                    "Ajoutez d'abord des jeux : l'IA choisira parmi eux.",
+                    Toast.LENGTH_LONG,
+                ).show()
+                return@launch
+            }
+            CompagnonIA.demanderRecommandation(
+                this@MainActivity,
+                jeux.map { CompagnonIA.JeuPropose(it.cle, it.titre, it.console) },
+            )
+        }
+    }
+
+    private fun lancerDepuisCle(cle: String?) {
+        if (cle == null) return
+        lifecycleScope.launch {
+            when {
+                cle.startsWith("i:") -> {
+                    val id = cle.removePrefix("i:").toIntOrNull() ?: return@launch
+                    val jeu = retrogradeDb.gameDao().selectById(id) ?: return@launch
+                    gameInteractor.onGamePlay(jeu)
+                }
+                cle.startsWith("e:") -> {
+                    val uri = cle.removePrefix("e:")
+                    val jeu =
+                        BibliothequeExterne.obtenir(applicationContext).charger().firstOrNull { it.uri == uri }
+                            ?: return@launch
+                    lancerJeuExterne(jeu)
+                }
+            }
+        }
+    }
+
+    private fun presenterJeu(game: Game) {
+        val console = runCatching { getString(GameSystem.findById(game.systemId).titleResId) }.getOrNull()
+        CompagnonIA.ouvrirAssistant(
+            activity = this,
+            titreJeu = game.displayName(),
+            console = console,
+            question =
+                "Présente-moi ce jeu en quelques phrases : de quoi il parle, comment on y joue, " +
+                    "et donne-moi 3 conseils pour bien débuter.",
+        )
     }
 
     @dagger.Module

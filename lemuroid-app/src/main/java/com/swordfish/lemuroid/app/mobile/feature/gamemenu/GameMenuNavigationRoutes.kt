@@ -44,6 +44,16 @@ enum class GameMenuRoute(
         titleId = R.string.game_menu_settings,
         parent = HOME,
     ),
+    SWITCH_GAME(
+        route = "arcadia_changer",
+        titleId = R.string.arcadia_menu_changer_titre,
+        parent = HOME,
+    ),
+    VOICE(
+        route = "arcadia_voix",
+        titleId = R.string.arcadia_menu_voix_titre,
+        parent = HOME,
+    ),
     ;
 
     fun canGoBack(): Boolean {

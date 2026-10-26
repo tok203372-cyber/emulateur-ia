@@ -121,7 +121,7 @@ enum class ConsoleExterne(
         nom = "Dreamcast",
         nomCourt = "DC",
         couleur = 0xFFF07B26,
-        extensions = setOf("chd", "cdi", "gdi", "cue", "lst", "dat", "zip"),
+        extensions = setOf("chd", "cdi", "gdi", "cue", "zip"),
         emulateurs =
             listOf(
                 EmulateurExterne(
@@ -211,7 +211,7 @@ enum class ConsoleExterne(
         nom = "Switch",
         nomCourt = "Switch",
         couleur = 0xFFE60012,
-        extensions = setOf("nsp", "xci", "nro", "nca"),
+        extensions = setOf("nsp", "xci", "nro"),
         emulateurs =
             listOf(
                 EmulateurExterne(

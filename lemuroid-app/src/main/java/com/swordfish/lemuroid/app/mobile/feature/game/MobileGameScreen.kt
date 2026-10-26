@@ -49,6 +49,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.swordfish.lemuroid.app.arcadia.ia.CalqueTraduction
 import com.swordfish.lemuroid.app.shared.game.BaseGameScreenViewModel
 import com.swordfish.lemuroid.app.shared.game.viewmodel.GameViewModelTouchControls.Companion.MENU_LOADING_ANIMATION_MILLIS
 import com.swordfish.lemuroid.app.shared.settings.HapticFeedbackMode
@@ -131,6 +132,9 @@ fun MobileGameScreen(viewModel: BaseGameScreenViewModel) {
                     viewModel.createRetroView(localContext, lifecycle)
                 },
             )
+
+            // Arcadia : traductions et messages de l'IA posés sur l'image du jeu.
+            CalqueTraduction(modifier = Modifier.fillMaxSize())
 
             val fullPos = fullScreenPosition.value
             val viewPos = viewportPosition.value

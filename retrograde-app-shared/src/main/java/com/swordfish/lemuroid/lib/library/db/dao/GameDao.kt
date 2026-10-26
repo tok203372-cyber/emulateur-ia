@@ -55,6 +55,10 @@ interface GameDao {
     @Query("SELECT * FROM games WHERE lastPlayedAt IS NOT NULL ORDER BY lastPlayedAt DESC LIMIT :limit")
     suspend fun asyncSelectFirstRecents(limit: Int): List<Game>
 
+    // Arcadia : liste complète pour « Changer de jeu » et les recommandations de l'IA.
+    @Query("SELECT * FROM games ORDER BY COALESCE(customName, title) ASC LIMIT :limit")
+    suspend fun asyncSelectAll(limit: Int): List<Game>
+
     @Query("SELECT * FROM games WHERE isFavorite = 1 ORDER BY lastPlayedAt DESC LIMIT :limit")
     fun selectFirstFavorites(limit: Int): Flow<List<Game>>
 
