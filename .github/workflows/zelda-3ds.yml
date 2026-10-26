@@ -1,0 +1,131 @@
+name: Zelda 3DS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'zelda-3ds/**'
+      - '.github/workflows/zelda-3ds.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: zelda3ds-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fabriquer:
+    name: Fabriquer pour la 3DS (devkitARM)
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Versions des outils
+        run: |
+          echo "::notice title=Outils 3DS::$(arm-none-eabi-gcc --version | head -1) | $(dkp-pacman -Q 2>/dev/null | grep -E 'libctru|citro3d|citro2d|picasso|3dstools|tex3ds|devkitARM ' | tr '\n' ' ')"
+
+      - name: Programme de test
+        run: |
+          set -o pipefail
+          make -C zelda-3ds/test -j4 2>&1 | tee test.log
+
+      - name: Résumé des erreurs
+        if: failure()
+        run: |
+          grep -E "error|Error|undefined reference|No such file" *.log | head -60 > erreurs.txt || true
+          while IFS= read -r ligne; do echo "::error title=Erreur::${ligne//%/%25}"; done < erreurs.txt
+
+      - name: Ranger les fichiers
+        run: |
+          mkdir -p sortie
+          cp zelda-3ds/test/zelda3ds-test.3dsx zelda-3ds/test/zelda3ds-test.elf zelda-3ds/test/zelda3ds-test.smdh sortie/
+          ls -la sortie
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: fabrique-3ds
+          path: sortie/
+          if-no-files-found: error
+          retention-days: 3
+
+  essayer:
+    name: Paquet CIA et essai dans l'émulateur
+    runs-on: ubuntu-latest
+    needs: fabriquer
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: fabrique-3ds
+          path: fabrique
+
+      - name: Outils CIA (makerom, bannertool)
+        run: |
+          mkdir -p outils && cd outils
+          curl -sSL -o makerom.zip https://github.com/3DSGuy/Project_CTR/releases/download/makerom-v0.19.0/makerom-v0.19.0-ubuntu_x86_64.zip
+          curl -sSL -o bannertool.zip https://github.com/diasurgical/bannertool/releases/download/1.2.0/bannertool.zip
+          unzip -q -o makerom.zip && unzip -q -o bannertool.zip -d bt
+          cp bt/linux-x86_64/bannertool . && chmod +x makerom bannertool
+          ./makerom 2>&1 | head -1
+
+      - name: Fabriquer le CIA de test
+        run: |
+          O=$PWD/outils
+          mkdir -p romfs-test && echo "Crepuscule : programme de test" > romfs-test/lisezmoi.txt
+          $O/bannertool makebanner -i zelda-3ds/cia/banniere.png -a zelda-3ds/cia/son.wav -o banniere.bnr
+          $O/bannertool makesmdh -s "Crépuscule (test)" -l "Test de la fabrique 3DS" -p "emulateur-ia" -i zelda-3ds/cia/icone.png -o icone.icn
+          $O/makerom -f cia -o fabrique/zelda3ds-test.cia -elf fabrique/zelda3ds-test.elf -rsf zelda-3ds/cia/application.rsf \
+            -target t -exefslogo -icon icone.icn -banner banniere.bnr \
+            -DAPP_TITLE=CREPTEST -DAPP_PRODUCT_CODE=CTR-H-CRPT -DAPP_UNIQUE_ID=0xC7E30 -DAPP_ROMFS=romfs-test
+          ls -la fabrique
+
+      - name: Préparer l'émulateur Azahar
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq xvfb libopengl0 libegl1 libgl1-mesa-dri imagemagick xdotool > /dev/null
+          curl -sSL -o azahar.AppImage https://github.com/azahar-emu/azahar/releases/download/2126.2/azahar.AppImage
+          chmod +x azahar.AppImage
+          ./azahar.AppImage --appimage-extract > /dev/null
+          ls squashfs-root/usr/bin
+
+      - name: Essai dans l'émulateur
+        run: |
+          bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/zelda3ds-test.3dsx" "$PWD/fabrique/zelda3ds-test.cia" resultats/test 0C7E3000
+
+      - name: Résumé de l'essai
+        if: always()
+        run: |
+          for f in resultats/test/journal-*.txt; do
+            [ -f "$f" ] || continue
+            echo "::notice title=$(basename $f)::$(head -c 3000 "$f" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+          done
+          ls -la resultats/test || true
+
+      - name: Publier les résultats (branche resultats-3ds)
+        if: always()
+        env:
+          JETON: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [ -d resultats ] || exit 0
+          cp fabrique/*.3dsx fabrique/*.cia resultats/ 2>/dev/null || true
+          cd resultats
+          git init -q -b resultats-3ds
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Résultats pour ${GITHUB_SHA::7} (essai ${GITHUB_RUN_ID})"
+          git push -q -f "https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY}.git" resultats-3ds
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Zelda-3DS-test
+          path: |
+            fabrique/zelda3ds-test.3dsx
+            fabrique/zelda3ds-test.cia
+          if-no-files-found: error

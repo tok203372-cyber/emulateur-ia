@@ -3,6 +3,9 @@ name: Compiler Arcadia
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'zelda-3ds/**'
+      - '.github/workflows/zelda-3ds.yml'
   workflow_dispatch:
 
 permissions:
