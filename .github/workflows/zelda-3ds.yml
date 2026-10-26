@@ -20,7 +20,7 @@ jobs:
     name: Fabriquer pour la 3DS (devkitARM)
     runs-on: ubuntu-latest
     container: devkitpro/devkitarm:latest
-    timeout-minutes: 60
+    timeout-minutes: 200
     defaults:
       run:
         shell: bash
@@ -31,46 +31,101 @@ jobs:
         run: |
           echo "::notice title=Outils 3DS::$($DEVKITARM/bin/arm-none-eabi-gcc --version | head -1) | $(dkp-pacman -Q 2>/dev/null | grep -E 'libctru|citro3d|citro2d|picasso|3dstools|tex3ds|devkitARM ' | tr '\n' ' ')"
 
+      - name: Accélérateur de compilation (ccache)
+        run: |
+          apt-get update -qq > /dev/null && apt-get install -y -qq ccache > /dev/null
+          ccache --version | head -1
+
+      - uses: actions/cache@v4
+        with:
+          path: /github/home/.cache/ccache
+          key: ccache-3ds-${{ github.sha }}
+          restore-keys: ccache-3ds-
+
       - name: Programme de test
         run: |
           set -o pipefail
           export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
           make -C zelda-3ds/test -j4 2>&1 | tee test.log
 
-      - name: Sources externes (Dusklight, Aurora, fmt, Tracy)
+      - name: Sources externes (Dusklight, Aurora, SDL 3...)
         run: |
           set -o pipefail
           bash zelda-3ds/outils/recuperer-sources.sh 2>&1 | tee sources.log
+
+      - name: Configuration (CMake)
+        run: |
+          set -o pipefail
+          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
+          export CCACHE_DIR=/github/home/.cache/ccache CCACHE_MAXSIZE=2G CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+          ccache -z > /dev/null
+          cmake -S zelda-3ds -B zelda-3ds/construction -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/3DS.cmake \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache 2>&1 | tee configuration.log
 
       - name: Moteur graphique et démonstration
         run: |
           set -o pipefail
           export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
-          cmake -S zelda-3ds -B zelda-3ds/construction -G Ninja -DCMAKE_TOOLCHAIN_FILE=$DEVKITPRO/cmake/3DS.cmake 2>&1 | tee moteur.log
+          export CCACHE_DIR=/github/home/.cache/ccache CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
+          cmake --build zelda-3ds/construction -j4 --target demo-gx_3dsx 2>&1 | tee moteur.log
+
+      - name: Jeu (Dusklight)
+        id: jeu
+        continue-on-error: true
+        timeout-minutes: 150
+        run: |
+          set -o pipefail
+          export PATH=$DEVKITARM/bin:$DEVKITPRO/tools/bin:$PATH
+          export CCACHE_DIR=/github/home/.cache/ccache CCACHE_SLOPPINESS=pch_defines,time_macros,include_file_mtime,include_file_ctime
           # -k 0 : continuer après une erreur pour toutes les voir en une fois
-          cmake --build zelda-3ds/construction -j4 -- -k 0 2>&1 | tee -a moteur.log
+          cmake --build zelda-3ds/construction -j4 -- -k 0 2>&1 | tee jeu.log
+          ccache -s | head -12
 
       - name: Résumé des erreurs
-        if: failure()
+        if: always()
         run: |
-          { grep -E "error|Error|undefined reference|No such file|not found|\*\*\*" *.log | head -48; echo "--- fin du journal ---"; tail -n 24 *.log; } > erreurs.txt || true
-          python3 - <<'PY' || awk '{print "::error title=Erreur::" $0}' erreurs.txt
+          [ -f jeu.log ] || exit 0
+          grep -E "error|undefined reference|No such file|\*\*\*" *.log > erreurs-completes.txt || true
+          echo "$(grep -c "error:" jeu.log || true) erreurs de compilation, $(grep -c "undefined reference" jeu.log || true) références indéfinies" > bilan.txt
+          cat bilan.txt
+          { cat bilan.txt; head -42 erreurs-completes.txt; } > erreurs.txt
+          python3 - <<'PY' || true
           lignes = open("erreurs.txt", encoding="utf-8", errors="replace").read().splitlines()
           def esc(t):
               return t.replace("%", "%25").replace("\r", "").replace("\n", "")
           for i in range(0, len(lignes), 6):
-              print("::error title=Erreur " + str(i // 6 + 1) + "::" + "%0A".join(esc(l) for l in lignes[i:i + 6]))
+              print("::warning title=Fabrication " + str(i // 6 + 1) + "::" + "%0A".join(esc(l) for l in lignes[i:i + 6]))
           PY
 
+      - name: Publier le journal de fabrication (branche fabrication-3ds)
+        if: always()
+        env:
+          JETON: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p journal
+          cp *.log journal/ 2>/dev/null || true
+          cp erreurs-completes.txt bilan.txt journal/ 2>/dev/null || true
+          cp zelda-3ds/construction/jeu/zelda3ds.map journal/ 2>/dev/null || true
+          [ -f zelda-3ds/construction/jeu/zelda3ds.elf ] && $DEVKITARM/bin/arm-none-eabi-size zelda-3ds/construction/jeu/zelda3ds.elf > journal/taille.txt
+          cd journal
+          git init -q -b fabrication-3ds
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Journal de fabrication pour ${GITHUB_SHA::7} (essai ${GITHUB_RUN_ID})"
+          git push -q -f "https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY}.git" fabrication-3ds
+
       - name: Ranger les fichiers
+        if: always()
         run: |
           mkdir -p sortie
-          cp zelda-3ds/test/zelda3ds-test.3dsx zelda-3ds/test/zelda3ds-test.elf zelda-3ds/test/zelda3ds-test.smdh sortie/
-          find zelda-3ds/construction -maxdepth 3 \( -name '*.3dsx' -o -name '*.elf' \) -exec cp {} sortie/ \;
+          cp zelda-3ds/test/zelda3ds-test.3dsx zelda-3ds/test/zelda3ds-test.elf zelda-3ds/test/zelda3ds-test.smdh sortie/ || true
+          find zelda-3ds/construction -maxdepth 3 \( -name '*.3dsx' -o -name '*.elf' -o -name '*.smdh' \) -exec cp {} sortie/ \;
           $DEVKITARM/bin/arm-none-eabi-size sortie/*.elf || true
           ls -la sortie
 
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: fabrique-3ds
           path: sortie/
@@ -81,6 +136,8 @@ jobs:
     name: Paquet CIA et essai dans l'émulateur
     runs-on: ubuntu-latest
     needs: fabriquer
+    # même si le jeu n'a pas pu être fabriqué : le programme de test et la démonstration sont essayés
+    if: ${{ !cancelled() }}
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
@@ -169,7 +226,7 @@ jobs:
           JETON: ${{ secrets.GITHUB_TOKEN }}
         run: |
           [ -d resultats ] || exit 0
-          cp fabrique/*.3dsx fabrique/*.cia fabrique/*.elf resultats/ 2>/dev/null || true
+          cp fabrique/demo-gx.3dsx fabrique/zelda3ds-test.3dsx fabrique/*.cia fabrique/demo-gx.elf fabrique/zelda3ds-test.elf resultats/ 2>/dev/null || true
           cd resultats
           git init -q -b resultats-3ds
           git config user.name "github-actions[bot]"

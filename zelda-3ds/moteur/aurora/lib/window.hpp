@@ -1,11 +1,48 @@
 #pragma once
-// Version 3DS : pas de fenêtre ni de SDL ; l'image est affichée sur l'écran du haut.
+// Version 3DS de lib/window.hpp d'Aurora : mêmes déclarations, sans dépendre des en-têtes de SDL.
+// Il n'y a pas de fenêtre : l'image est affichée sur l'écran du haut (400x240).
+//  - fonctions sans SDL : window3ds.cpp (moteur) ;
+//  - événements (SDL 3 pour la manette, le son...) : jeu/plateforme/aurora_jeu.cpp.
 #include <aurora/aurora.h>
 
 #include <cstdint>
 
+struct SDL_Window;
+struct SDL_Renderer;
+
 namespace aurora::window {
+
+enum class CustomEvent {
+  FutureResize,
+  RefreshSurface,
+  End,
+};
+
+inline uint32_t operator+(uint32_t lhs, CustomEvent rhs) { return lhs + static_cast<uint32_t>(rhs); }
+
+class SurfaceLock {
+public:
+  SurfaceLock() noexcept;
+  ~SurfaceLock();
+  SurfaceLock(const SurfaceLock&) = delete;
+  SurfaceLock& operator=(const SurfaceLock&) = delete;
+};
+
+bool initialize();
+bool initialize_event_watch();
+bool push_custom_event(CustomEvent eventType);
+void shutdown();
+bool create_window(AuroraBackend backend);
+bool create_renderer();
+void destroy_window();
+void show_window();
 AuroraWindowSize get_window_size();
+const AuroraEvent* poll_events();
+SDL_Window* get_sdl_window();
+SDL_Renderer* get_sdl_renderer();
+bool is_paused() noexcept;
+bool is_presentable() noexcept;
+void set_surface_ready(bool ready) noexcept;
 void set_title(const char* title);
 void set_fullscreen(bool fullscreen);
 bool get_fullscreen();
@@ -16,6 +53,5 @@ void request_frame_buffer_resize();
 void set_frame_buffer_scale(float scale);
 void set_frame_buffer_aspect_fit(bool fit);
 void set_background_input(bool value);
-bool is_paused() noexcept;
-bool is_presentable() noexcept;
+
 } // namespace aurora::window

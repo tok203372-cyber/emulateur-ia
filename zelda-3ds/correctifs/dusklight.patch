@@ -1,0 +1,211 @@
+diff --git a/include/d/d_event_lib.h b/include/d/d_event_lib.h
+index b0ee88a6f3..2f4a6f0aea 100644
+--- a/include/d/d_event_lib.h
++++ b/include/d/d_event_lib.h
+@@ -46,7 +46,7 @@ public:
+ 
+     /* 0x4 */ fopAc_ac_c* mActor;
+     /* 0x8 */ action_class<dEvLib_callback_c>* mAction;
+-    /* 0xC */ u16 _C;
++    /* 0xC */ u16 field_0xC;  // 3DS : « _C » est une macro de <ctype.h> dans newlib
+ };
+ 
+ #endif /* D_EVENT_D_EVENT_LIB_H */
+diff --git a/include/helpers/endian.h b/include/helpers/endian.h
+index b9727ce4c7..11710c1ee2 100644
+--- a/include/helpers/endian.h
++++ b/include/helpers/endian.h
+@@ -6,7 +6,10 @@
+ #include "dolphin/mtx.h"
+ 
+ // Platform detection - Little Endian targets
+-#if defined(_WIN32) || defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(_M_X64) || defined(_M_IX86)
++// 3DS : les processeurs ARM 32 bits (comme celui de la 3DS) sont aussi little-endian ;
++// sans ce test, les données big-endian du jeu ne seraient pas retournées sur ces appareils.
++#if defined(_WIN32) || defined(__x86_64__) || defined(__i386__) || defined(__aarch64__) || defined(_M_X64) || defined(_M_IX86) || \
++    (defined(__arm__) && defined(__BYTE_ORDER__) && __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+     #define TARGET_LITTLE_ENDIAN 1
+ #else
+     #define TARGET_LITTLE_ENDIAN 0
+diff --git a/sdk/include/mods/api.h b/sdk/include/mods/api.h
+index 3015130ae3..5150c3e888 100644
+--- a/sdk/include/mods/api.h
++++ b/sdk/include/mods/api.h
+@@ -214,7 +214,7 @@ typedef struct MOD_META_ALIGN ModMetaHookFn {
+     void* resolved; /* runtime only */
+ } ModMetaHookFn;
+ 
+-static_assert(sizeof(ModMetaHookFn) == 24);
++static_assert(sizeof(ModMetaHookFn) == (sizeof(void*) == 8 ? 24 : 16)); /* 16 octets en 32 bits */
+ 
+ /*
+  * Hook on a member function: `pmf` holds the compiler's pointer-to-member representation
+@@ -251,7 +251,7 @@ typedef struct MOD_META_ALIGN ModMetaHookMemExt {
+     void* resolved; /* runtime only */
+ } ModMetaHookMemExt;
+ 
+-static_assert(sizeof(ModMetaHookMemExt) == 24);
++static_assert(sizeof(ModMetaHookMemExt) == (sizeof(void*) == 8 ? 24 : 16)); /* 16 octets en 32 bits */
+ 
+ /*
+  * Hook on a function by symbol name, for targets that cannot be named in C++ (file-local statics,
+diff --git a/src/d/d_event_lib.cpp b/src/d/d_event_lib.cpp
+index a078569052..ad697ebba9 100644
+--- a/src/d/d_event_lib.cpp
++++ b/src/d/d_event_lib.cpp
+@@ -32,7 +32,7 @@ bool dEvLib_callback_c::setEvent(int mapToolId, int eventIdx, int param_2) {
+             eventIdx = dComIfGp_getEventManager().getEventIdx(mActor, static_cast<u16>(mapToolId));
+         }
+         mActor->eventInfo.setEventId(eventIdx);
+-        _C = param_2;
++        field_0xC = param_2;
+         return setAction(&l_startAction);
+     }
+ }
+@@ -74,10 +74,10 @@ bool dEvLib_callback_c::executeStart() {
+     if (!mActor->eventInfo.checkCommandDemoAccrpt()) {
+         if (mActor->eventInfo.getMapToolId() != 0xFF) {
+             fopAcM_orderMapToolEvent(mActor, mActor->eventInfo.getMapToolId(),
+-                                     mActor->eventInfo.getEventId(), 0xFFFF, _C, 0);
++                                     mActor->eventInfo.getEventId(), 0xFFFF, field_0xC, 0);
+         } else {
+             fopAcM_orderOtherEventId(mActor, mActor->eventInfo.getEventId(),
+-                                     mActor->eventInfo.getMapToolId(), 0xFFFF, 0, _C);
++                                     mActor->eventInfo.getMapToolId(), 0xFFFF, 0, field_0xC);
+         }
+         mActor->eventInfo.onCondition(2);
+         return TRUE;
+diff --git a/src/m_Do/m_Do_machine.cpp b/src/m_Do/m_Do_machine.cpp
+index 3d0acca1a9..6792c97c50 100644
+--- a/src/m_Do/m_Do_machine.cpp
++++ b/src/m_Do/m_Do_machine.cpp
+@@ -853,7 +853,16 @@ int mDoMch_Create() {
+     arenaSize -= 0xC800;
+     #endif
+ 
+-#if TARGET_PC
++#if DUSK_3DS
++    // 3DS : processeur 32 bits comme la GameCube, mais 40 Mo de MEM1 (au lieu de 24) pour les
++    // ajouts du portage PC. Tailles un peu plus grandes que sur GameCube, bien plus petites que
++    // sur PC (où le tas du jeu est multiplié par 20).
++    arenaSize = 12 * 1024 * 1024;
++    commandHeapSize *= 2;
++    archiveHeapSize = archiveHeapSize * 3 / 2;
++    j2dHeapSize *= 2;
++    gameHeapSize *= 2;
++#elif TARGET_PC
+     // Change heap sizes to account for 64bit pointers & extra memory available.
+     arenaSize = 32 * 1024 * 1024;
+     commandHeapSize *= 2;
+diff --git a/src/m_Do/m_Do_main.cpp b/src/m_Do/m_Do_main.cpp
+index e713e1308d..3789f8f3bc 100644
+--- a/src/m_Do/m_Do_main.cpp
++++ b/src/m_Do/m_Do_main.cpp
+@@ -542,6 +542,98 @@ static void mods_init(const std::filesystem::path& mods_dir) {
+     dusk::mods::ModLoader::instance().init();
+ }
+ 
++#if DUSK_3DS
++// =========================================================================
++// 3DS ENTRY POINT : version simplifiée de game_main (pas de menus RmlUi, pas de
++// modifications ; l'image du disque est cherchée dans le dossier sdmc:/zelda-3ds/)
++// =========================================================================
++#include <plateforme3ds.hpp>
++
++int game_main(int argc, char* argv[]) {
++    if (mainCalled) {
++        return 0;
++    }
++    mainCalled = true;
++
++    borealis::cli::StandardOptions standardOptions;
++    dusk::registerSettings();
++    const auto dataPaths = dusk::data::initialize_data(standardOptions.userDir);
++    dusk::ConfigPath = dataPaths.userPath;
++    dusk::CachePath = dataPaths.cachePath;
++    dusk::InitializeLogging(dusk::CachePath, standardOptions);
++    log_build_info();
++    dusk::config::load_from_user_preferences();
++
++    {
++        const auto userPathString = dusk::ConfigPath.u8string();
++        const auto cachePathString = dusk::CachePath.u8string();
++        AuroraConfig config{};
++        config.appName = dusk::AppName;
++        config.userPath = reinterpret_cast<const char*>(userPathString.c_str());
++        config.cachePath = reinterpret_cast<const char*>(cachePathString.c_str());
++        config.logCallback = borealis::log::aurora_callback();
++        config.logLevel = borealis::log::to_aurora_level(borealis::log::level());
++        config.mem1Size = zelda3ds::taille_mem1();
++        config.mem2Size = zelda3ds::taille_aram();
++        auroraInfo = aurora_initialize(argc, argv, &config);
++    }
++
++    dusk::audio::SetMasterVolume(dusk::audio::MasterVolumeToLinear(dusk::getSettings().audio.masterVolume / 100.0f));
++    dusk::audio::SetEnableReverb(dusk::getSettings().audio.enableReverb);
++
++    const std::string dvdPath = zelda3ds::chemin_disque();
++    if (dvdPath.empty()) {
++        zelda3ds::erreur_fatale(
++            "Aucune image du disque trouvee dans sdmc:/zelda-3ds/ "
++            "(fichier .iso, .gcm, .ciso ou .gcz de Twilight Princess GameCube).");
++    }
++    DuskLog.info("Loading DVD image: {}", dvdPath);
++    if (!aurora_dvd_open(dvdPath.c_str())) {
++        zelda3ds::erreur_fatale("Impossible de lire " + dvdPath +
++                                " (formats acceptes : ISO, CISO, GCZ ; RVZ : convertir avec Dolphin).");
++    }
++    dusk::IsGameLaunched = true;
++
++    dusk::version::init();
++    LanguageInit();
++
++    OSInit();
++
++    mDoMain::sPowerOnTime = DUSK_IF_ELSE(OSGetSystemTime(), OSGetTime());
++
++    // Reset Data
++    static mDoRstData sResetData = {0};
++    mDoRst::setResetData(&sResetData);
++    mDoRst::offReset();
++    mDoRst::setLogoScnFlag(0);
++
++    // Global Context Init
++    dComIfG_ct();
++
++    mDoDvdThd::SyncWidthSound = false;
++
++    OSReport("Starting main01 (Game Loop)...\n");
++
++    main01();
++    borealis::shutdown();
++
++    if (daMP_c::m_myObj) {
++        daMP_c::m_myObj->daMP_c_Finish();
++    }
++
++    borealis::log::shutdown();
++    fflush(stdout);
++    fflush(stderr);
++
++    mDoMch_Destroy();
++    OSResetSystem(OS_RESET_SHUTDOWN, 0, 0);
++
++    dusk::audio::Shutdown();
++    dusk::config::shutdown();
++    aurora_shutdown();
++    return 0;
++}
++#else
+ // =========================================================================
+ // PC ENTRY POINT
+ // =========================================================================
+@@ -990,6 +1082,8 @@ int game_main(int argc, char* argv[]) {
+     return 0;
+ }
+ 
++#endif // DUSK_3DS
++
+ 
+ bool JKRHeap::dump_sort() {
+     return true;

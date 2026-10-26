@@ -1,13 +1,6 @@
 # Moteur graphique : API GX d'Aurora (fichiers d'origine + versions 3DS) et rendu gx3ds (citro3d)
 
-# Arbre fusionné : Aurora d'origine, puis nos fichiers modifiés par-dessus
-set(AURORA3DS ${CMAKE_BINARY_DIR}/aurora3ds)
-file(REMOVE_RECURSE ${AURORA3DS})
-file(COPY ${AURORA_DIR}/lib ${AURORA_DIR}/include DESTINATION ${AURORA3DS})
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/aurora/lib DESTINATION ${AURORA3DS})
-# (les petites corrections des fichiers d'origine sont dans correctifs/aurora.patch,
-#  appliqué par outils/recuperer-sources.sh)
-set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/aurora/lib)
+# (arbre fusionné AURORA3DS préparé par le CMakeLists.txt principal)
 
 file(GLOB AURORA_GX_SOURCES ${AURORA3DS}/lib/dolphin/gx/*.cpp)
 file(GLOB AURORA_MTX_SOURCES ${AURORA3DS}/lib/dolphin/mtx/*.c)
