@@ -64,7 +64,8 @@ object CatalogueJeux {
                 .getOrDefault(emptyList())
                 .map { jeu ->
                     ElementJeu(
-                        cle = "e:${jeu.uri}",
+                        // La console fait partie de la clé : un même fichier peut être rangé dans deux consoles.
+                        cle = "e:${jeu.consoleId}|${jeu.uri}",
                         titre = jeu.titre,
                         console = jeu.etiquette,
                         groupe = "e:${jeu.consoleId}",

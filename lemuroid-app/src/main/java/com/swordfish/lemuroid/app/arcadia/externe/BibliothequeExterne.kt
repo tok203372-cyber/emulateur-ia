@@ -83,7 +83,8 @@ class BibliothequeExterne private constructor(private val context: Context) {
             val arbre = dossier(console)
             val trouves = if (arbre != null) chercherJeux(console, arbre) else emptyList()
             verrou.withLock {
-                val anciens = (if (charge) jeuxFlow.value else lireCache()).associateBy { it.uri }
+                val anciensListe = if (charge) jeuxFlow.value else lireCache()
+                val anciens = anciensListe.filter { it.consoleId == console.id }.associateBy { it.uri }
                 val fusionnes =
                     trouves.map { nouveau ->
                         val ancien = anciens[nouveau.uri]
@@ -93,7 +94,7 @@ class BibliothequeExterne private constructor(private val context: Context) {
                             nouveau
                         }
                     }
-                val autres = anciens.values.filter { it.consoleId != console.id }
+                val autres = anciensListe.filter { it.consoleId != console.id }
                 val tous = trier(autres + fusionnes)
                 ecrireCache(tous)
                 jeuxFlow.value = tous
@@ -106,20 +107,20 @@ class BibliothequeExterne private constructor(private val context: Context) {
         ConsoleExterne.values().filter { dossier(it) != null }.forEach { analyser(it) }
     }
 
-    suspend fun noterPartie(jeu: JeuExterne) = modifier(jeu.uri) { it.copy(dernierePartie = System.currentTimeMillis()) }
+    suspend fun noterPartie(jeu: JeuExterne) = modifier(jeu) { it.copy(dernierePartie = System.currentTimeMillis()) }
 
     suspend fun definirFavori(
         jeu: JeuExterne,
         favori: Boolean,
-    ) = modifier(jeu.uri) { it.copy(favori = favori) }
+    ) = modifier(jeu) { it.copy(favori = favori) }
 
     private suspend fun modifier(
-        uri: String,
+        jeu: JeuExterne,
         changement: (JeuExterne) -> JeuExterne,
     ) = withContext(Dispatchers.IO) {
         verrou.withLock {
             val actuels = if (charge) jeuxFlow.value else lireCache()
-            val nouveaux = actuels.map { if (it.uri == uri) changement(it) else it }
+            val nouveaux = actuels.map { if (it.uri == jeu.uri && it.consoleId == jeu.consoleId) changement(it) else it }
             ecrireCache(nouveaux)
             jeuxFlow.value = nouveaux
             charge = true
@@ -137,7 +138,18 @@ class BibliothequeExterne private constructor(private val context: Context) {
 
         return fichiers
             .filter { it.extension in console.extensions }
+            .filterNot { fichier -> estDisqueNintendoAilleurs(console, fichier) }
             .mapNotNull { fichier -> creerJeu(console, fichier) }
+    }
+
+    /** Un .iso GameCube/Wii rangé dans le dossier d'une autre console (même extension) est ignoré. */
+    private fun estDisqueNintendoAilleurs(
+        console: ConsoleExterne,
+        fichier: Fichier,
+    ): Boolean {
+        if (console == ConsoleExterne.GAMECUBE_WII || fichier.extension != "iso") return false
+        val plateforme = EnTeteDisque.lire(context, fichier.uri, fichier.extension)?.plateforme
+        return plateforme == EnTeteDisque.Plateforme.GAMECUBE || plateforme == EnTeteDisque.Plateforme.WII
     }
 
     private fun creerJeu(

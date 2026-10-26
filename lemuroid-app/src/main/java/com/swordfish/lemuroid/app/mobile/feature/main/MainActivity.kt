@@ -508,9 +508,11 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                     gameInteractor.onGamePlay(jeu)
                 }
                 cle.startsWith("e:") -> {
-                    val uri = cle.removePrefix("e:")
+                    val console = cle.removePrefix("e:").substringBefore('|')
+                    val uri = cle.substringAfter('|')
                     val jeu =
-                        BibliothequeExterne.obtenir(applicationContext).charger().firstOrNull { it.uri == uri }
+                        BibliothequeExterne.obtenir(applicationContext).charger()
+                            .firstOrNull { it.uri == uri && it.consoleId == console }
                             ?: return@launch
                     lancerJeuExterne(jeu)
                 }
