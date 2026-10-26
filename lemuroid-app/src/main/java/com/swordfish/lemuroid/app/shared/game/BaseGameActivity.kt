@@ -382,16 +382,14 @@ abstract class BaseGameActivity : ImmersiveActivity() {
     }
 
     private fun lireEcran() {
-        lifecycleScope.launch {
-            // Laisse le jeu réafficher son image après la fermeture du menu.
-            delay(350)
+        // Laisse le jeu réafficher son image après la fermeture du menu.
+        apresReprise {
             TraductionEnDirect.lireUneFois(this@BaseGameActivity, applicationContext, vueJeu())
         }
     }
 
     private fun ouvrirAssistant(question: String?) {
-        lifecycleScope.launch {
-            delay(350)
+        apresReprise {
             val capture = vueJeu()?.let { CaptureJeu.capturer(it, 1024) }
             val fichier = capture?.let { runCatching { CaptureJeu.enregistrer(applicationContext, it.image) }.getOrNull() }
             val texte = capture?.let { TraductionEnDirect.texteVisible(applicationContext, it.image) }
@@ -404,6 +402,14 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                 question = question,
                 image = fichier,
             )
+        }
+    }
+
+    private fun apresReprise(action: suspend () -> Unit) {
+        lifecycleScope.launch {
+            while (!lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) delay(50)
+            delay(300)
+            action()
         }
     }
 
@@ -420,14 +426,15 @@ abstract class BaseGameActivity : ImmersiveActivity() {
                     GlobalScope.launch { baseGameScreenViewModel.saveSlot(emplacement) }
                     Toast.makeText(this, "Sauvegarde dans l'emplacement ${emplacement + 1}", Toast.LENGTH_SHORT).show()
                 } else {
-                    baseGameScreenViewModel.saveQuickSave()
+                    // La sauvegarde rapide doit attendre que le jeu ait repris (fil d'émulation actif).
+                    apresReprise { baseGameScreenViewModel.saveQuickSave() }
                 }
             }
             GameMenuContract.ACTION_CHARGER -> {
                 if (emplacement != null) {
                     GlobalScope.launch { baseGameScreenViewModel.loadSlot(emplacement) }
                 } else {
-                    baseGameScreenViewModel.loadQuickSave()
+                    apresReprise { baseGameScreenViewModel.loadQuickSave() }
                 }
             }
             GameMenuContract.ACTION_LIRE -> lireEcran()
