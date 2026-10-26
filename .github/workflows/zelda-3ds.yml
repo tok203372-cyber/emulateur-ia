@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     container: devkitpro/devkitarm:latest
     timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v5
 
