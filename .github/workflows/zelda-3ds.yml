@@ -218,14 +218,14 @@ jobs:
               *) continue ;;
             esac
             [ -f "$elf" ] || continue
-            for log in "$d"azahar-*.txt; do
-              [ -f "$log" ] || continue
-              grep -o "at PC 0x[0-9A-Fa-f]*" "$log" | awk '{print $3}' | sort | uniq -c | sort -rn | head -30 |
-                while read -r n pc; do
-                  echo "$n x $pc : $(arm-none-eabi-addr2line -f -C -i -p -e "$elf" "$pc" | tr '\n' ' ')"
-                done > "${log%.txt}-adresses.txt"
-              if [ -s "${log%.txt}-adresses.txt" ]; then
-                head -c 2500 "${log%.txt}-adresses.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Accès mémoire invalides ('"$(basename "$d")"')::/'
+            for pcs in "$d"pc-*.txt; do
+              [ -s "$pcs" ] || continue
+              nom=$(basename "$pcs" .txt); nom=${nom#pc-}
+              while read -r n pc; do
+                echo "$n x $pc : $(arm-none-eabi-addr2line -f -C -i -p -e "$elf" "$pc" | tr '\n' ' ')"
+              done < "$pcs" > "${d}adresses-$nom.txt"
+              if [ -s "${d}adresses-$nom.txt" ]; then
+                head -c 2500 "${d}adresses-$nom.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Accès mémoire invalides ('"$(basename "$d") $nom"')::/'
               fi
             done
           done
@@ -246,7 +246,9 @@ jobs:
           JETON: ${{ secrets.GITHUB_TOKEN }}
         run: |
           [ -d resultats ] || exit 0
-          cp fabrique/demo-gx.3dsx fabrique/zelda3ds-test.3dsx fabrique/*.cia fabrique/demo-gx.elf fabrique/zelda3ds-test.elf resultats/ 2>/dev/null || true
+          cp fabrique/demo-gx.3dsx fabrique/zelda3ds-test.3dsx fabrique/*.cia fabrique/zelda3ds.3dsx fabrique/demo-gx.elf fabrique/zelda3ds-test.elf resultats/ 2>/dev/null || true
+          # GitHub refuse les fichiers de plus de 100 Mo
+          find resultats -type f -size +90M -print -delete
           cd resultats
           git init -q -b resultats-3ds
           git config user.name "github-actions[bot]"

@@ -5,6 +5,7 @@
 #include "plateforme3ds.hpp"
 
 #include <3ds.h>
+#include <SDL3/SDL_hints.h>
 
 #include <algorithm>
 #include <cctype>
@@ -16,6 +17,12 @@
 #include <vector>
 
 extern "C" int aurora_main(int argc, char* argv[]);
+
+// Pile du fil principal : libctru la place au début du tas, avec cette taille (32 Ko par défaut,
+// bien trop peu pour le jeu)
+extern "C" {
+u32 __stacksize__ = 1024 * 1024;
+}
 
 namespace zelda3ds {
 
@@ -69,20 +76,41 @@ void erreur_fatale(const std::string& message) {
 } // namespace zelda3ds
 
 int main(int argc, char* argv[]) {
+  zelda3ds::installer_gestionnaires_programme();
   // New 3DS : processeur à 804 MHz et cache L2
   osSetSpeedupEnable(true);
   gfxInitDefault();
   consoleInit(GFX_BOTTOM, nullptr);
-  std::printf("\x1b[32;1mCrepuscule\x1b[0m - Twilight Princess (Dusklight) pour New 3DS\n\n");
+  std::printf("\x1b[32;1mCrepuscule\x1b[0m - Twilight Princess (Dusklight) pour New 3DS\n");
+  std::printf("Version %s\n\n", zelda3ds::version());
   mkdir("sdmc:/zelda-3ds", 0777);
+  // Rapport du plantage précédent : renommé pour ne pas le confondre avec un nouveau
+  rename("sdmc:/zelda-3ds/plantage.txt", "sdmc:/zelda-3ds/plantage-precedent.txt");
 
   bool new3ds = false;
   APT_CheckNew3DS(&new3ds);
   if (!new3ds) {
-    std::printf("Attention : cette version est prévue pour la New 3DS.\n");
+    std::printf("Attention : cette version est prevue pour la New 3DS.\n");
   }
   // Le son de SDL tourne sur le cœur 1 (partagé avec le système) : 30 % de ce cœur pour le jeu
   APT_SetAppCpuTimeLimit(30);
+
+  // Son : le processeur audio de la 3DS a besoin de son microprogramme, copié sur la carte SD par
+  // l'outil DSP1. Sans lui, le jeu tourne sans son (pilote audio « dummy » de SDL, qui fait
+  // avancer la musique et les effets au même rythme, sans rien jouer).
+  if (FILE* f = std::fopen("sdmc:/3ds/dspfirm.cdc", "rb")) {
+    std::fclose(f);
+  } else {
+    std::printf("\x1b[33;1mPas de son\x1b[0m : sdmc:/3ds/dspfirm.cdc absent.\n"
+                "Lancez une fois DSP1 depuis le menu HOME.\n\n");
+    SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "dummy");
+  }
+  // Fichier sdmc:/zelda-3ds/sans-son : son coupé à la demande
+  if (FILE* f = std::fopen("sdmc:/zelda-3ds/sans-son", "rb")) {
+    std::fclose(f);
+    std::printf("Son coupe (fichier sans-son).\n");
+    SDL_SetHint(SDL_HINT_AUDIO_DRIVER, "dummy");
+  }
 
   const int resultat = aurora_main(argc, argv);
   gfxExit();

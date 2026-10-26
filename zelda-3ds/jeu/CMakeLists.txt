@@ -229,8 +229,24 @@ target_precompile_headers(zelda3ds PRIVATE "$<$<COMPILE_LANGUAGE:CXX>:${DUSK_DIR
 # Les fichiers de la plateforme 3DS n'utilisent pas l'en-tête précompilé du jeu
 set_source_files_properties(${PLATEFORME} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 # Le code inutilisé (et ses dépendances) est retiré à l'édition de liens (voir aussi
-# -ffunction-sections dans le CMakeLists.txt principal)
-target_link_options(zelda3ds PRIVATE -Wl,--gc-sections -Wl,-Map,zelda3ds.map)
+# -ffunction-sections dans le CMakeLists.txt principal).
+# --wrap : les std::thread sont créés par plateforme/fil3ds.cpp (pile, priorité, cœur 2).
+target_link_options(zelda3ds PRIVATE -Wl,--gc-sections -Wl,-Map,zelda3ds.map
+    -Wl,--wrap=__syscall_thread_create)
+
+# Version (commit) affichée au démarrage et dans les rapports de plantage
+if (DEFINED ENV{GITHUB_SHA})
+  string(SUBSTRING "$ENV{GITHUB_SHA}" 0 7 ZELDA3DS_VERSION)
+else ()
+  execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+                  OUTPUT_VARIABLE ZELDA3DS_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+endif ()
+if (NOT ZELDA3DS_VERSION)
+  set(ZELDA3DS_VERSION "locale")
+endif ()
+set_property(SOURCE plateforme/version3ds.cpp APPEND PROPERTY COMPILE_DEFINITIONS
+             "ZELDA3DS_VERSION=\"${ZELDA3DS_VERSION}\"")
+message(STATUS "Version du jeu 3DS : ${ZELDA3DS_VERSION}")
 
 ctr_generate_smdh(zelda3ds.smdh
     NAME "Crepuscule"

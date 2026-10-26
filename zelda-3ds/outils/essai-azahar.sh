@@ -42,7 +42,17 @@ lancer() {
     kill -9 -- "-$pid" 2> /dev/null || kill -9 "$pid" 2> /dev/null || true
     wait "$pid" 2> /dev/null || true
     sleep 1
-    cp "$DONNEES/log/azahar_log.txt" "$SORTIE/azahar-$nom.txt" 2> /dev/null || true
+    local log="$DONNEES/log/azahar_log.txt"
+    if [ -f "$log" ]; then
+        # Accès mémoire invalides, comptés par adresse du code (PC) avant de raccourcir le journal
+        grep -o "at PC 0x[0-9A-Fa-f]*" "$log" | awk '{print $3}' | sort | uniq -c | sort -rn | head -40 > "$SORTIE/pc-$nom.txt"
+        # Journal limité à 600 Ko (début et fin) : il peut atteindre des centaines de Mo
+        if [ "$(stat -c %s "$log")" -gt 600000 ]; then
+            { head -c 400000 "$log"; printf '\n\n[... journal raccourci : %s octets au total ...]\n\n' "$(stat -c %s "$log")"; tail -c 200000 "$log"; } > "$SORTIE/azahar-$nom.txt"
+        else
+            cp "$log" "$SORTIE/azahar-$nom.txt"
+        fi
+    fi
     if [ -f "$DONNEES/sdmc/$JOURNAL_SD" ]; then
         cp "$DONNEES/sdmc/$JOURNAL_SD" "$SORTIE/journal-$nom.txt"
         rm -f "$DONNEES/sdmc/$JOURNAL_SD"

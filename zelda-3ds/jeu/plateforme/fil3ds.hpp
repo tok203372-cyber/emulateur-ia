@@ -7,6 +7,8 @@
 //  - priorité déduite de celle du fil GameCube (fil principal du jeu : 16 -> 0x30 sur 3DS) ;
 //  - sur New 3DS, le cœur 2 (libre pour les jeux) quand l'application y a accès : les fils
 //    du jeu (son, chargement, décompression) tournent alors en parallèle du fil principal.
+// Les autres std::thread (lecture du disque d'Aurora...) sont placés de la même façon : voir
+// __wrap___syscall_thread_create dans fil3ds.cpp (option -Wl,--wrap de l'édition de liens).
 #include <3ds.h>
 
 #include <cstdint>
@@ -23,6 +25,10 @@ void preparer_fil(int prioriteGameCube, uint32_t taillePile) noexcept;
 
 // Nombre de fils placés sur le cœur 2 (pour le journal)
 int fils_coeur2() noexcept;
+
+// Crée un fil natif : cœur 2 de la New 3DS si possible, sinon le cœur du programme. Le
+// gestionnaire de plantage est installé au début du fil.
+Thread creer_fil(ThreadFunc fonction, void* arg, size_t pile, int priorite) noexcept;
 
 class Fil {
 public:
@@ -63,10 +69,7 @@ public:
   }
 
 private:
-  static void entree(void* arg) {
-    std::unique_ptr<std::function<void()>> travail(static_cast<std::function<void()>*>(arg));
-    (*travail)();
-  }
+  static void entree(void* arg);
   static Thread creer(ThreadFunc fonction, void* arg) noexcept;
 
   Thread mFil = nullptr;
