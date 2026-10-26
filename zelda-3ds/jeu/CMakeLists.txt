@@ -211,6 +211,10 @@ file(GLOB PLATEFORME plateforme/*.cpp)
 list(REMOVE_ITEM PLATEFORME ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/aurora_jeu.cpp
                             ${CMAKE_CURRENT_SOURCE_DIR}/plateforme/borealis3ds.cpp)
 
+# Les bibliothèques JSystem dépendent les unes des autres : ld doit les parcourir en groupe
+set(CMAKE_LINK_GROUP_USING_RESCAN "LINKER:--start-group" "LINKER:--end-group")
+set(CMAKE_LINK_GROUP_USING_RESCAN_SUPPORTED TRUE)
+
 add_executable(zelda3ds ${FICHIERS_JEU} ${PLATEFORME})
 target_compile_definitions(zelda3ds PRIVATE ${DEFS_JEU})
 target_link_libraries(zelda3ds PRIVATE
