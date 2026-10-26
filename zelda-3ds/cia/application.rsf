@@ -37,10 +37,11 @@ AccessControlInfo:
 
   MemoryType                    : Application
   SystemMode                    : 64MB
+  # Fil principal sur le cœur 0 ; cœurs 0 et 1 permis (le son de SDL tourne sur le cœur 1)
   IdealProcessor                : 0
-  AffinityMask                  : 1
+  AffinityMask                  : 3
   Priority                      : 16
-  MaxCpu                        : 0xFF
+  MaxCpu                        : 0x9E
   HandleTableSize               : 0x200
   DisableDebug                  : false
   EnableForceDebug              : false

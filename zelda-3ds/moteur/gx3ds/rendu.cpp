@@ -846,7 +846,9 @@ void journaliser_dessins(uint32_t nombre) noexcept { sJournalRestant = nombre; }
 
 void initialiser() noexcept {
   if (sInitialise) return;
-  C3D_Init(0x200000);
+  // Tampon de commandes du GPU : 6 Mo (une scène du jeu peut demander plusieurs milliers de
+  // dessins par image ; au-delà, citro3d ignorerait les commandes en trop)
+  C3D_Init(0x600000);
   sCible = C3D_RenderTargetCreate(240, 400, GPU_RB_RGBA8, GPU_RB_DEPTH24_STENCIL8);
   C3D_RenderTargetSetOutput(sCible, GFX_TOP, GFX_LEFT,
                             GX_TRANSFER_FLIP_VERT(0) | GX_TRANSFER_OUT_TILED(0) | GX_TRANSFER_RAW_COPY(0) |
@@ -926,6 +928,7 @@ void debut_image() noexcept {
 
 void fin_image() noexcept {
   if (!sImageEnCours) return;
+  sStats.commandes = C3D_GetCmdBufUsage();
   C3D_FrameEnd(0);
   sImageEnCours = false;
   sStats.texturesConverties = textures::conversions_image();

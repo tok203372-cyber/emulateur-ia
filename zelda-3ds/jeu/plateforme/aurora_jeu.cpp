@@ -27,6 +27,8 @@ constexpr Module Log{"aurora::3ds"};
 std::vector<AuroraEvent> g_events;
 bool g_initialFrame = false;
 AuroraStats g_stats{};
+uint32_t g_images = 0;
+u64 g_debutMesure = 0;
 
 // Il faut annoncer un moteur de rendu « réel » : avec BACKEND_NULL, le jeu n'afficherait que
 // les menus. Le nom n'a pas d'importance (il n'apparaît que dans le journal).
@@ -146,6 +148,18 @@ void aurora_end_frame() {
   const auto& st = gx3ds::stats();
   g_stats.drawCallCount = st.dessins;
   g_stats.lastTextureUploadSize = st.octetsTextures;
+
+  // Toutes les 300 images : vitesse et charge du rendu dans le journal (écran du bas et fichier)
+  const u64 maintenant = svcGetSystemTick();
+  if (g_debutMesure == 0) g_debutMesure = maintenant;
+  if (++g_images % 300 == 0) {
+    const double secondes = static_cast<double>(maintenant - g_debutMesure) / (CPU_TICKS_PER_MSEC * 1000.0);
+    Log.info("{} images/s ; derniere image : {} dessins, {} sommets, textures {} Ko, commandes GPU {:.0f} %, "
+             "ignores {}",
+             secondes > 0 ? static_cast<int>(300.0 / secondes + 0.5) : 0, st.dessins, st.sommets,
+             st.octetsTextures / 1024, st.commandes * 100.f, st.ignores);
+    g_debutMesure = maintenant;
+  }
 }
 
 AuroraBackend aurora_get_backend() { return g_config.desiredBackend; }

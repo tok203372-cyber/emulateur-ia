@@ -55,6 +55,7 @@ struct Stats {
   uint32_t octetsTextures = 0;
   uint32_t tevApproximes = 0;
   uint32_t ignores = 0;
+  float commandes = 0.f;  // part du tampon de commandes du GPU utilisée (0 à 1)
 };
 const Stats& stats() noexcept;
 

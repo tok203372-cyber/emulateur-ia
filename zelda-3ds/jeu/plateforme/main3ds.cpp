@@ -96,8 +96,9 @@ int main(int argc, char* argv[]) {
   APT_SetAppCpuTimeLimit(30);
 
   // Son : le processeur audio de la 3DS a besoin de son microprogramme, copié sur la carte SD par
-  // le menu Rosalina de Luma3DS (ou l'outil DSP1). Sans lui, le jeu tourne sans son (pilote audio « dummy » de SDL, qui fait
-  // avancer la musique et les effets au même rythme, sans rien jouer).
+  // le menu Rosalina de Luma3DS (ou l'outil DSP1). Sans lui, le jeu tourne sans son (pilote
+  // audio « dummy » de SDL, qui fait avancer la musique et les effets au même rythme, sans rien
+  // jouer).
   if (FILE* f = std::fopen("sdmc:/3ds/dspfirm.cdc", "rb")) {
     std::fclose(f);
   } else {

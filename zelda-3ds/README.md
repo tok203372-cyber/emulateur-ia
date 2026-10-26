@@ -15,7 +15,7 @@ parties propres au PC sont remplacées :
 
 - **Affichage** : le jeu dessine avec l'API graphique de la GameCube (GX). Le moteur `gx3ds`
   traduit ces commandes pour la puce graphique de la 3DS (PICA200) : combineurs de textures,
-  sommets, textures, éclairage. Image en 400x240 (format large) sur l'écran du haut.
+  sommets, textures, éclairage. Image en 320x240 (4:3) au centre de l'écran du haut.
 - **Manette, son, fichiers, fils d'exécution** : SDL 3, qui fonctionne sur 3DS.
 - **Disque** : lecteur d'images GameCube (ISO, CISO, GCZ) qui remplace la bibliothèque « nod ».
 - **Écran du bas** : journal (messages du jeu, erreurs).
@@ -31,8 +31,23 @@ parties propres au PC sont remplacées :
 | `commun/` | En-tête inclus partout (types entiers identiques au PC) |
 | `test/` | Petit programme de test : vérifie la fabrication, l'émulateur et la console |
 | `cia/` | Réglages et images du paquet CIA (icône, bannière, son) |
-| `outils/` | Récupération des sources externes, essai automatique dans l'émulateur Azahar |
+| `outils/` | Récupération des sources externes, essai automatique dans l'émulateur Azahar, lecture des rapports de plantage (`lire-plantage.py`) |
 
 La recette `.github/workflows/zelda-3ds.yml` récupère les sources (versions figées), applique
 les correctifs, fabrique les fichiers `.3dsx` et `.cia` (onglet **Actions** → **Zelda 3DS**),
 puis les essaie dans l'émulateur Azahar.
+
+## Versions d'essai et rapports de plantage
+
+Quand une version démarre correctement dans Azahar (jusqu'à la recherche du disque), la recette
+la publie sur la page **Releases** du dépôt (`essai-3ds` : `zelda3ds.cia` et `zelda3ds.3dsx`).
+Le guide d'installation pas à pas explique comment l'installer avec FBI.
+
+En cas de plantage sur la console, le jeu écrit `sdmc:/zelda-3ds/plantage.txt` (version,
+registres, adresses du code trouvées sur la pile). La carte des adresses de chaque version est
+gardée sur la branche `cartes-3ds` :
+
+```
+python3 zelda-3ds/outils/lire-plantage.py plantage.txt <date>-<version>.map.xz
+```
+
