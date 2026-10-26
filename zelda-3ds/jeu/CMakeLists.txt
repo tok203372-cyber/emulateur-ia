@@ -231,7 +231,7 @@ set_source_files_properties(${PLATEFORME} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 # Le code inutilisé (et ses dépendances) est retiré à l'édition de liens (voir aussi
 # -ffunction-sections dans le CMakeLists.txt principal).
 # --wrap : les std::thread sont créés par plateforme/fil3ds.cpp (pile, priorité, cœur 2).
-target_link_options(zelda3ds PRIVATE -Wl,--gc-sections -Wl,-Map,zelda3ds.map
+target_link_options(zelda3ds PRIVATE -Wl,--gc-sections -Wl,-Map,${CMAKE_CURRENT_BINARY_DIR}/zelda3ds.map
     -Wl,--wrap=__syscall_thread_create)
 
 # Version (commit) affichée au démarrage et dans les rapports de plantage

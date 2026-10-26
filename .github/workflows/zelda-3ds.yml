@@ -33,7 +33,7 @@ jobs:
 
       - name: Accélérateur de compilation (ccache)
         run: |
-          apt-get update -qq > /dev/null && apt-get install -y -qq ccache > /dev/null
+          apt-get update -qq > /dev/null && apt-get install -y -qq ccache xz-utils > /dev/null
           ccache --version | head -1
 
       - uses: actions/cache@v4
@@ -105,7 +105,6 @@ jobs:
           mkdir -p journal
           cp *.log journal/ 2>/dev/null || true
           cp erreurs-completes.txt bilan.txt journal/ 2>/dev/null || true
-          cp zelda-3ds/construction/jeu/zelda3ds.map journal/ 2>/dev/null || true
           [ -f zelda-3ds/construction/jeu/zelda3ds.elf ] && $DEVKITARM/bin/arm-none-eabi-size zelda-3ds/construction/jeu/zelda3ds.elf > journal/taille.txt
           cd journal
           git init -q -b fabrication-3ds
@@ -114,6 +113,26 @@ jobs:
           git add -A
           git commit -q -m "Journal de fabrication pour ${GITHUB_SHA::7} (essai ${GITHUB_RUN_ID})"
           git push -q -f "https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY}.git" fabrication-3ds
+          cd ..
+          # Cartes des adresses du jeu (une par version, gardées) : pour retrouver les fonctions
+          # citées dans un rapport de plantage (sdmc:/zelda-3ds/plantage.txt)
+          CARTE=zelda-3ds/construction/jeu/zelda3ds.map
+          if [ -f "$CARTE" ]; then
+            DEPOT="https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY}.git"
+            if ! git clone -q --depth 1 --branch cartes-3ds "$DEPOT" cartes 2>/dev/null; then
+              mkdir -p cartes && git -C cartes init -q -b cartes-3ds
+            fi
+            # nom : date-version.map.xz (l'ordre alphabétique est l'ordre chronologique)
+            xz -9 -c "$CARTE" > "cartes/$(date -u +%Y%m%d-%H%M)-${GITHUB_SHA::7}.map.xz"
+            cd cartes
+            # on garde les 30 plus récentes
+            ls *.map.xz | sort | head -n -30 | xargs -r rm -f
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -A
+            git commit -q -m "Carte des adresses pour ${GITHUB_SHA::7}" || true
+            git push -q "$DEPOT" cartes-3ds || true
+          fi
 
       - name: Ranger les fichiers
         if: always()
@@ -257,7 +276,40 @@ jobs:
           git commit -q -m "Résultats pour ${GITHUB_SHA::7} (essai ${GITHUB_RUN_ID})"
           git push -q -f "https://x-access-token:${JETON}@github.com/${GITHUB_REPOSITORY}.git" resultats-3ds
 
+      - name: Vérifier le démarrage du jeu
+        id: demarrage
+        if: ${{ !cancelled() && hashFiles('fabrique/zelda3ds.cia') != '' }}
+        run: |
+          # Sans image du disque, le jeu doit arriver jusqu'au message « Aucune image du disque »
+          if grep -q "Aucune image du disque" resultats/jeu/journal-cia.txt 2>/dev/null; then
+            echo "::notice title=Jeu::Le jeu démarre jusqu'à la recherche du disque (CIA)"
+            echo "ok=1" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error title=Jeu::Le jeu ne démarre pas jusqu'à la recherche du disque"
+            exit 1
+          fi
+
+      - name: Publier la version d'essai (page Releases)
+        if: ${{ !cancelled() && steps.demarrage.outputs.ok == '1' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cat > notes.md <<NOTES
+          Version ${GITHUB_SHA::7} du portage de Twilight Princess (Dusklight) pour New 3DS / New 3DS XL.
+
+          - **zelda3ds.cia** : à installer avec FBI (recommandé).
+          - **zelda3ds.3dsx** : pour le Homebrew Launcher (moins de mémoire disponible).
+
+          Il faut votre propre copie du disque GameCube (.iso, .ciso ou .gcz) dans le dossier
+          \`zelda-3ds\` de la carte SD. Version expérimentale : graphismes simplifiés, vitesse réduite.
+          NOTES
+          gh release delete essai-3ds -R "$GITHUB_REPOSITORY" --cleanup-tag -y 2>/dev/null || true
+          gh release create essai-3ds -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+            --title "Crépuscule pour New 3DS (essai ${GITHUB_SHA::7})" --notes-file notes.md \
+            fabrique/zelda3ds.cia fabrique/zelda3ds.3dsx
+
       - uses: actions/upload-artifact@v7
+        if: ${{ !cancelled() }}
         with:
           name: Zelda-3DS-test
           path: |
