@@ -147,9 +147,12 @@ jobs:
                 while read -r n pc; do
                   echo "$n x $pc : $(arm-none-eabi-addr2line -f -C -i -p -e "$elf" "$pc" | tr '\n' ' ')"
                 done > "${log%.txt}-adresses.txt"
-              [ -s "${log%.txt}-adresses.txt" ] && head -c 2500 "${log%.txt}-adresses.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Accès mémoire invalides ('"$(basename "$d")"')::/'
+              if [ -s "${log%.txt}-adresses.txt" ]; then
+                head -c 2500 "${log%.txt}-adresses.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Accès mémoire invalides ('"$(basename "$d")"')::/'
+              fi
             done
           done
+          true
 
       - name: Résumé de l'essai
         if: always()

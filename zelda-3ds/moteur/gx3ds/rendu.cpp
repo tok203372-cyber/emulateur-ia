@@ -23,14 +23,13 @@ using aurora::gx::g_gxState;
 namespace gx3ds {
 namespace {
 
-// Registres du shader (même ordre que les déclarations de gx3ds.v.pica)
+// Registres du shader (même ordre que les déclarations de gx3ds.v.pica ; vérifiés au démarrage)
 constexpr int U_PROJECTION = 0;
 constexpr int U_POSMTX = 4;
 constexpr int U_TEXMTX = 34;
 constexpr int U_MATCOL = 43;
 constexpr int U_AMBCOL = 44;
 constexpr int U_LUMIERES = 45;
-constexpr int I_BOUCLE = 0;
 enum : int {
   B_ECLAIRAGE = 0,
   B_MATVTX,
@@ -41,7 +40,14 @@ enum : int {
   B_PROJ1,
   B_PROJ2,
   B_AVECLUMIERES,
+  NB_BOOLEENS,
 };
+constexpr const char* NomsBooleens[NB_BOOLEENS] = {"eclairage", "matvtx", "ambvtx", "alphavtx", "attenuation",
+                                                   "proj0",     "proj1",  "proj2",  "avecLumieres"};
+// Emplacements des uniformes booléens et entiers : citro3d attend l'emplacement donné par
+// shaderInstanceGetUniformLocation (0x68 + n pour les booléens, 0x60 + n pour les entiers).
+int sEmplBooleens[NB_BOOLEENS];
+int sEmplBoucle = -1;
 // Registres d'entrée du shader
 constexpr int V_POS = 0, V_NRM = 1, V_CLR = 2, V_TC0 = 3, V_MTX = 6;
 
@@ -103,6 +109,10 @@ void unif(int reg, float x, float y, float z, float w) {
 
 void invaliderUniformes() {
   for (bool& b : sUnifValide) b = false;
+}
+
+void booleen(int b, bool valeur) {
+  if (sEmplBooleens[b] >= 0) C3D_BoolUnifSet(GPU_VERTEX_SHADER, sEmplBooleens[b], valeur);
 }
 
 // ----------------------------------------------------------------------------------------------
@@ -311,7 +321,8 @@ void preparerTev(const Preparation& p) {
 void lierTextures(const Preparation& p) {
   for (int u = 0; u < 3; u++) {
     if (u >= p.nbUnites) {
-      C3D_TexBind(u, nullptr);
+      // Unité inutilisée. Attention : C3D_TexBind lit la texture des unités 1 et 2 (jamais nulle).
+      C3D_TexBind(u, u == 0 ? nullptr : textures::blanche());
       continue;
     }
     const GXTexObj_& obj = g_gxState.loadedTextures[p.unites[u].texMap];
@@ -414,11 +425,11 @@ void envoyerEclairage(const Preparation& p) {
   unif(U_AMBCOL, sc.ambColor[0], sc.ambColor[1], sc.ambColor[2], sa.ambColor[3]);
 
   const bool eclairage = cc.lightingEnabled && g_gxState.numChans > 0;
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_ECLAIRAGE, eclairage);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_MATVTX, cc.matSrc == GX_SRC_VTX);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_AMBVTX, cc.ambSrc == GX_SRC_VTX);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_ALPHAVTX, ca.matSrc == GX_SRC_VTX);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_ATTENUATION, cc.attnFn == GX_AF_SPOT);
+  booleen(B_ECLAIRAGE, eclairage);
+  booleen(B_MATVTX, cc.matSrc == GX_SRC_VTX);
+  booleen(B_AMBVTX, cc.ambSrc == GX_SRC_VTX);
+  booleen(B_ALPHAVTX, ca.matSrc == GX_SRC_VTX);
+  booleen(B_ATTENUATION, cc.attnFn == GX_AF_SPOT);
 
   int nb = 0;
   if (eclairage && cc.attnFn != GX_AF_SPEC) {
@@ -434,8 +445,8 @@ void envoyerEclairage(const Preparation& p) {
       nb++;
     }
   }
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_AVECLUMIERES, nb > 0);
-  if (nb > 0) C3D_IVUnifSet(GPU_VERTEX_SHADER, I_BOUCLE, nb - 1, 0, 5, 0);
+  booleen(B_AVECLUMIERES, nb > 0);
+  if (nb > 0 && sEmplBoucle >= 0) C3D_IVUnifSet(GPU_VERTEX_SHADER, sEmplBoucle, nb - 1, 0, 5, 0);
   (void)p;
 }
 
@@ -666,9 +677,9 @@ bool preparerDessin(GXVtxFmt fmt, uint16_t n, const uint8_t* donnees, Preparatio
   envoyerMatrices();
   bool proj[3] = {false, false, false};
   for (int u = 0; u < p.nbUnites; u++) matriceTexgen(u, p.unites[u].texCoord, proj[u]);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_PROJ0, proj[0]);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_PROJ1, proj[1]);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_PROJ2, proj[2]);
+  booleen(B_PROJ0, proj[0]);
+  booleen(B_PROJ1, proj[1]);
+  booleen(B_PROJ2, proj[2]);
   envoyerEclairage(p);
   appliquerEtat();
   return true;
@@ -709,12 +720,12 @@ void effacerZone(float x, float y, float l, float h, uint32_t couleurRgba, float
   unif(U_POSMTX + 0, 1.f, 0.f, 0.f, 0.f);
   unif(U_POSMTX + 1, 0.f, 1.f, 0.f, 0.f);
   unif(U_POSMTX + 2, 0.f, 0.f, 1.f, 0.f);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_ECLAIRAGE, false);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_MATVTX, false);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_ALPHAVTX, false);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_PROJ0, false);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_PROJ1, false);
-  C3D_BoolUnifSet(GPU_VERTEX_SHADER, B_PROJ2, false);
+  booleen(B_ECLAIRAGE, false);
+  booleen(B_MATVTX, false);
+  booleen(B_ALPHAVTX, false);
+  booleen(B_PROJ0, false);
+  booleen(B_PROJ1, false);
+  booleen(B_PROJ2, false);
 
   for (int i = 0; i < 6; i++) {
     C3D_TexEnv* env = C3D_GetTexEnv(i);
@@ -726,7 +737,7 @@ void effacerZone(float x, float y, float l, float h, uint32_t couleurRgba, float
   }
   C3D_TexEnvBufUpdate(C3D_Both, 0);
   sTevValide = false;
-  for (int u = 0; u < 3; u++) C3D_TexBind(u, nullptr);
+  for (int u = 0; u < 3; u++) C3D_TexBind(u, u == 0 ? nullptr : textures::blanche());
 
   int masque = 0;
   if (couleur) masque |= GPU_WRITE_RED | GPU_WRITE_GREEN | GPU_WRITE_BLUE;
@@ -848,11 +859,22 @@ void initialiser() noexcept {
   C3D_BindProgram(&sProgramme);
 
   // Vérification des registres du shader
-  const int p = shaderInstanceGetUniformLocation(sProgramme.vertexShader, "projection");
-  const int l = shaderInstanceGetUniformLocation(sProgramme.vertexShader, "lumieres");
-  if (p != U_PROJECTION || l != U_LUMIERES) {
-    printf("gx3ds : registres du shader inattendus (%d, %d)\n", p, l);
+  struct Attendu {
+    const char* nom;
+    int registre;
+  };
+  constexpr Attendu attendus[] = {{"projection", U_PROJECTION}, {"posmtx", U_POSMTX}, {"texmtx", U_TEXMTX},
+                                  {"matcol", U_MATCOL},         {"ambcol", U_AMBCOL}, {"lumieres", U_LUMIERES}};
+  for (const auto& a : attendus) {
+    const int r = shaderInstanceGetUniformLocation(sProgramme.vertexShader, a.nom);
+    if (r != a.registre) printf("gx3ds : uniforme %s en %d au lieu de %d\n", a.nom, r, a.registre);
   }
+  for (int b = 0; b < NB_BOOLEENS; b++) {
+    sEmplBooleens[b] = shaderInstanceGetUniformLocation(sProgramme.vertexShader, NomsBooleens[b]);
+    if (sEmplBooleens[b] < 0) printf("gx3ds : booléen %s absent du shader\n", NomsBooleens[b]);
+  }
+  sEmplBoucle = shaderInstanceGetUniformLocation(sProgramme.vertexShader, "boucle");
+  if (sEmplBoucle < 0) printf("gx3ds : entier « boucle » absent du shader\n");
 
   sSommets = static_cast<uint8_t*>(linearAlloc(TailleSommets));
   sIndices = static_cast<uint16_t*>(linearAlloc(MaxIndices * sizeof(uint16_t)));
