@@ -217,13 +217,17 @@ jobs:
         run: |
           bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/demo-gx.3dsx" - resultats/demo - 30 zelda-3ds/demo-journal.txt
 
-      - name: Essai du jeu sans disque (démarrage et message d'erreur)
+      - name: Essai du jeu (sans disque, puis avec un disque factice)
         if: ${{ !cancelled() && hashFiles('fabrique/zelda3ds.cia') != '' }}
-        timeout-minutes: 8
+        timeout-minutes: 10
         run: |
-          # .3dsx (mémoire par défaut de l'émulateur), puis le CIA installé (mode 178 Mo de la New 3DS)
-          bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" "$PWD/fabrique/zelda3ds.3dsx" \
-            "$PWD/fabrique/zelda3ds.cia" resultats/jeu 0C7E3100 45 zelda-3ds/erreur.txt
+          # 1. .3dsx sans disque : le jeu doit afficher « Aucune image du disque »
+          # 2. CIA (mode 178 Mo) avec un disque factice (en-tête GameCube sans aucun fichier, voir
+          #    outils/faux-disque.py) : le jeu initialise tout puis échoue en cherchant ses fichiers ;
+          #    le journal et le rapport de plantage montrent jusqu'où va le démarrage
+          python3 zelda-3ds/outils/faux-disque.py disque-factice.iso
+          DISQUE_CIA="$PWD/disque-factice.iso" bash zelda-3ds/outils/essai-azahar.sh "$PWD/squashfs-root/AppRun" \
+            "$PWD/fabrique/zelda3ds.3dsx" "$PWD/fabrique/zelda3ds.cia" resultats/jeu 0C7E3100 60 zelda-3ds/erreur.txt
 
       - name: Adresses des erreurs (addr2line)
         if: always()
@@ -247,15 +251,32 @@ jobs:
                 head -c 2500 "${d}adresses-$nom.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Accès mémoire invalides ('"$(basename "$d") $nom"')::/'
               fi
             done
+            # Rapports de plantage du jeu : fonctions des adresses citées (PC, LR, pile)
+            for rapport in "$d"plantage-*.txt; do
+              [ -f "$rapport" ] || continue
+              grep -oE '\b[0-9A-F]{8}\b' "$rapport" | awk '!vu[$0]++' | while read -r a; do
+                v=$((16#$a))
+                [ "$v" -ge $((16#100000)) ] && [ "$v" -lt $((16#4000000)) ] || continue
+                echo "$a : $(arm-none-eabi-addr2line -f -C -i -p -e "$elf" "0x$a" | tr '\n' ' ')"
+              done > "${rapport%.txt}-fonctions.txt"
+              if [ -s "${rapport%.txt}-fonctions.txt" ]; then
+                head -c 3000 "${rapport%.txt}-fonctions.txt" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g' | sed 's/^/::warning title=Plantage ('"$(basename "$rapport")"')::/'
+              fi
+            done
           done
           true
 
       - name: Résumé de l'essai
         if: always()
         run: |
-          for f in resultats/*/journal-*.txt; do
+          for f in resultats/*/journal-*.txt resultats/*/plantage-*.txt; do
             [ -f "$f" ] || continue
             echo "::notice title=$(basename $(dirname $f))/$(basename $f)::$(head -c 3000 "$f" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')"
+          done
+          # Fin des journaux du jeu (jusqu'où le démarrage est allé)
+          for f in resultats/*/dusklight-*.log; do
+            [ -f "$f" ] || continue
+            echo "::notice title=$(basename $f)::$(tail -c 3000 "$f" | sed 's/%/%25/g' | sed ':a;N;$!ba;s/\n/%0A/g')"
           done
           ls -la resultats/* || true
 
@@ -281,8 +302,8 @@ jobs:
         if: ${{ !cancelled() && hashFiles('fabrique/zelda3ds.cia') != '' }}
         run: |
           # Sans image du disque, le jeu doit arriver jusqu'au message « Aucune image du disque »
-          if grep -q "Aucune image du disque" resultats/jeu/journal-cia.txt 2>/dev/null; then
-            echo "::notice title=Jeu::Le jeu démarre jusqu'à la recherche du disque (CIA)"
+          if grep -q "Aucune image du disque" resultats/jeu/journal-3dsx.txt 2>/dev/null; then
+            echo "::notice title=Jeu::Le jeu démarre jusqu'à la recherche du disque"
             echo "ok=1" >> "$GITHUB_OUTPUT"
           else
             echo "::error title=Jeu::Le jeu ne démarre pas jusqu'à la recherche du disque"

@@ -76,6 +76,11 @@ if [ "$FICHIER_3DSX" != "-" ]; then
 fi
 
 if [ "$FICHIER_CIA" != "-" ] && [ -n "$TITRE" ]; then
+    # Variable DISQUE_CIA : image de disque copiée dans sdmc:/zelda-3ds/ avant le lancement du CIA
+    if [ -n "${DISQUE_CIA:-}" ] && [ -f "$DISQUE_CIA" ]; then
+        mkdir -p "$DONNEES/sdmc/zelda-3ds"
+        cp "$DISQUE_CIA" "$DONNEES/sdmc/zelda-3ds/"
+    fi
     timeout -s KILL 90 "$APPRUN" -i "$FICHIER_CIA" > "$SORTIE/installation-cia.txt" 2>&1 || echo "code de sortie : $?" >> "$SORTIE/installation-cia.txt"
     titre_bas=$(echo "$TITRE" | tr 'A-F' 'a-f')
     APP=$(find "$DONNEES" -path "*title/00040000/$titre_bas/content/*.app" | head -1)
