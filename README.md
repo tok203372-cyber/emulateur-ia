@@ -1,61 +1,46 @@
-# Lemuroid
+# Arcadia — l'émulateur intelligent
 
-[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/com.swordfish.lemuroid/)
-[<img src="https://play.google.com/intl/en_us/badges/images/generic/en-play-badge.png"
-     alt="Get it on Google Play"
-     height="80">](https://play.google.com/store/apps/details?id=com.swordfish.lemuroid)
+Arcadia réunit tous vos émulateurs dans une seule application Android, avec une intelligence
+artificielle qui fonctionne entièrement sur le téléphone.
 
-## Description
+## Ce que fait Arcadia
 
-Lemuroid is an open-source emulation project for Android based on Libretro. Its main goal is ease of use, good Android integration and a great user experience.
+- **Une seule bibliothèque pour toutes les consoles** : NES, Super Nintendo, Game Boy (Color/Advance),
+  Nintendo 64, Nintendo DS, 3DS, PlayStation, PSP, Mega Drive, Master System, Game Gear, PC Engine,
+  Neo Geo Pocket, WonderSwan, Atari, arcade, DOS… directement dans Arcadia.
+- **Encore plus de consoles** (onglet « Plus ») : GameCube et Wii (Dolphin), PlayStation 2 (ARMSX2,
+  NetherSX2), Dreamcast (Flycast, Redream), Saturn, 3DS (Azahar), Wii U (Cemu), Switch, PS3 —
+  Arcadia range ces jeux, affiche les jaquettes GameCube/Wii et les lance dans le bon émulateur.
+- **Changer de jeu ou de console en pleine partie** : la partie est sauvegardée automatiquement,
+  puis le jeu choisi démarre avec le bon émulateur.
+- **Manettes** : les touches sont configurées automatiquement pour chaque console.
+- **IA locale** :
+  - traduction en direct des textes du jeu (japonais, anglais… vers le français), posée sur l'image ;
+  - lecture de l'écran à voix haute ;
+  - commandes vocales (« sauvegarde », « traduis l'écran », « change de jeu pour Zelda »…) ;
+  - assistant de jeu qui voit votre écran (application **Arcadia IA**) ;
+  - « Que jouer ce soir ? » : l'IA choisit parmi vos jeux selon votre envie ;
+  - « Présenter ce jeu » depuis la bibliothèque.
 
-It originated from a rib of [Retrograde](https://github.com/retrograde/retrograde-android), but graduated to a standalone project integrating [LibretroDroid](https://github.com/Swordfish90/LibretroDroid).
+Aucun jeu n'est fourni : utilisez uniquement vos propres copies de jeux.
 
-|Screen 1|Screen 2|Screen 3|
+## Les deux applications
+
+| Dossier | Application | Rôle |
 |---|---|---|
-|![Screen1](https://github.com/Swordfish90/Lemuroid/blob/master/fastlane/metadata/android/en-US/images/phoneScreenshots/1.jpg)|![Screen2](https://github.com/Swordfish90/Lemuroid/blob/master/fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg)|![Screen3](https://github.com/Swordfish90/Lemuroid/blob/master/fastlane/metadata/android/en-US/images/phoneScreenshots/3.jpg)|
+| `lemuroid-app` (et modules voisins) | **Arcadia** | L'émulateur, les menus, la traduction, la voix |
+| `arcadia-ia` | **Arcadia IA** | Le modèle de langage (LiteRT-LM) : assistant et recommandations |
 
-### Supported Systems:
-- Atari 2600 (A26) ([stella](https://docs.libretro.com/library/stella/))
-- Atari 7800 (A78) ([prosystem](https://docs.libretro.com/library/prosystem/))
-- Atari Lynx (Lynx) ([handy](https://docs.libretro.com/library/handy/))
-- Nintendo (NES) ([fceumm](https://docs.libretro.com/library/fceumm/))
-- Super Nintendo (SNES) ([snes9x](https://docs.libretro.com/library/snes9x/))
-- Game Boy (GB) ([gambatte](https://docs.libretro.com/library/gambatte/))
-- Game Boy Color (GBC) ([gambatte](https://docs.libretro.com/library/gambatte/))
-- Game Boy Advance (GBA) ([mgba](https://docs.libretro.com/library/mgba/))
-- Sega Genesis (aka Megadrive) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
-- Sega CD (aka Mega CD) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
-- Sega Master System (SMS) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
-- Sega Game Gear (GG) ([genesis_plus_gx](https://docs.libretro.com/library/genesis_plus_gx/))
-- Nintendo 64 (N64) ([mupen64plus](https://docs.libretro.com/library/mupen64plus/))
-- PlayStation (PSX) ([PCSX-ReARMed](https://docs.libretro.com/library/pcsx_rearmed/))
-- PlayStation Portable (PSP) ([ppsspp](https://docs.libretro.com/library/ppsspp/))
-- FinalBurn Neo (Arcade) ([fbneo](https://github.com/libretro/FBNeo/))
-- Nintendo DS (NDS) ([desmume](https://docs.libretro.com/library/desmume/)/[MelonDS](https://docs.libretro.com/library/melonds/))
-- NEC PC Engine (PCE) ([beetle_pce_fast](https://docs.libretro.com/library/beetle_pce_fast/))
-- Neo Geo Pocket (NGP) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))
-- Neo Geo Pocket Color (NGC) ([mednafen_ngp](https://docs.libretro.com/library/beetle_neopop/))
-- WonderSwan (WS) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
-- WonderSwan Color (WSC) ([beetle_cygne](https://docs.libretro.com/library/beetle_cygne/))
-- Nintendo 3DS (3DS) ([citra](https://docs.libretro.com/library/citra/))
+La recette `.github/workflows/arcadia.yml` fabrique les deux applications ; le résultat se trouve
+dans l'onglet **Actions**, artefact **Arcadia-APK**.
 
-### Features:
-- Android TV support
-- Automatically save and restore game states.
-- ROMs scanning and indexing
-- Optimized touch controls
-- Quick save/load
-- Support for Zipped ROMs
-- Display simulation (LCD/CRT)
-- Gamepad support
-- Local multiplayer
-- Tilt input
-- Customizable touch controls (size and position)
-- Cloud save sync
-- HD mode
+## Origine et licence
 
-### Languages:
-You can help translate Lemuroid in your native language by going here: https://crowdin.com/project/lemuroid
+Arcadia est une version modifiée de [Lemuroid](https://github.com/Swordfish90/Lemuroid)
+(Swordfish90, licence GPL-3.0), basée sur la révision 3625bc1. Les ajouts d'Arcadia sont surtout
+dans `lemuroid-app/src/main/java/com/swordfish/lemuroid/app/arcadia/` et dans `arcadia-ia/`.
+L'ensemble est distribué sous la même licence **GPL-3.0** (voir `COPYING`).
+
+Bibliothèques principales : LibretroDroid et les cœurs libretro, ML Kit (reconnaissance de texte,
+traduction, identification de langue), LiteRT-LM (Google AI Edge). Les modèles d'IA (Qwen 2.5,
+Phi-4 mini, Gemma 3n) sont téléchargés séparément et gardent leurs propres licences.

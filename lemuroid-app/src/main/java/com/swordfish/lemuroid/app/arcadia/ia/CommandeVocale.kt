@@ -82,8 +82,10 @@ object CommandeVocale {
                 Commande.Traduction(false)
             contient("tradui", "traduction", "translate") -> Commande.Traduction(true)
             contient("lis l ecran", "lire l ecran", "lis le texte", "lis moi", "lecture", "read") -> Commande.LireEcran
+            // « Charge la sauvegarde » contient aussi « sauvegarde » : on teste le chargement d'abord.
+            commencePar("charge", "recharge", "load", "reprend") || contient(" charge", "recharge", "load") ->
+                Commande.Charger(emplacement)
             contient("sauvegard", "enregistr", "save") -> Commande.Sauvegarder(emplacement)
-            contient("charge", "recharge", "load", "reprend") -> Commande.Charger(emplacement)
             contient("avance rapide", "accelere", "plus vite", "turbo", "fast forward") -> Commande.AvanceRapide
             contient("remets le son", "remet le son", "active le son", "unmute", "son on") -> Commande.RemettreSon
             contient("coupe le son", "silence", "muet", "mute", "sans le son") -> Commande.CouperSon

@@ -321,7 +321,7 @@ fun ArcadiaIAScreen(
         item {
             Carte(titre = "Pendant vos parties", icone = Icons.Filled.SportsEsports) {
                 Text(
-                    "Ouvrez le menu du jeu (bouton menu à l'écran, ou Select + Start sur la manette) :",
+                    "Ouvrez le menu du jeu : bouton menu à l'écran, ou sur la manette le bouton central (Home) ou L3 + R3 (les deux sticks enfoncés) :",
                     style = MaterialTheme.typography.bodyMedium,
                 )
                 Fonction(Icons.Filled.SwapHoriz, "Changer de jeu ou de console", "La partie est sauvegardée, l'autre jeu démarre avec le bon émulateur.")

@@ -119,6 +119,10 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
     @Inject
     lateinit var inputDeviceManager: InputDeviceManager
 
+    // Arcadia : lancement direct du jeu suivant (« Changer de jeu »).
+    @Inject
+    lateinit var gameLauncher: GameLauncher
+
     private val reviewManager = ReviewManager()
 
     private val mainViewModel: MainViewModel by viewModels {
@@ -447,7 +451,7 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 if (prochain != null && resultCode == Activity.RESULT_OK) {
                     lifecycleScope.launch {
                         Enchainement.lancer(this@MainActivity, prochain, retrogradeDb) { jeu ->
-                            gameInteractor.onGamePlay(jeu)
+                            gameLauncher.launchGameAsync(this@MainActivity, jeu, true, false)
                         }
                     }
                 }

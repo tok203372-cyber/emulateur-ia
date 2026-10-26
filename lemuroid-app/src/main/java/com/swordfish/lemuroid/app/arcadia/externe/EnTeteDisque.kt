@@ -33,7 +33,7 @@ object EnTeteDisque {
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 FileInputStream(pfd.fileDescriptor).use { flux ->
                     val canal = flux.channel
-                    fun lireA(position: Long, taille: Int): ByteArray? {
+                    analyser(extension) { position, taille ->
                         val tampon = ByteBuffer.allocate(taille)
                         var lu = 0
                         while (lu < taille) {
@@ -41,48 +41,56 @@ object EnTeteDisque {
                             if (n <= 0) break
                             lu += n
                         }
-                        return if (lu == taille) tampon.array() else null
-                    }
-
-                    val debut = lireA(0, 0x100) ?: return@use null
-                    val magie = ByteBuffer.wrap(debut, 0, 4).order(ByteOrder.BIG_ENDIAN).int
-
-                    when {
-                        // RVZ / WIA : l'en-tête du disque est recopié à l'octet 0x58.
-                        magie == 0x52565A01 || magie == 0x57494101 -> {
-                            val typeDisque = ByteBuffer.wrap(debut, 0x48, 4).order(ByteOrder.BIG_ENDIAN).int
-                            val plateforme =
-                                when (typeDisque) {
-                                    1 -> Plateforme.GAMECUBE
-                                    2 -> Plateforme.WII
-                                    else -> Plateforme.INCONNUE
-                                }
-                            enTete(debut, 0x58, plateforme)
-                        }
-                        // WBFS (Wii uniquement) : en-tête du disque au début du 2e secteur.
-                        magie == 0x57424653 -> {
-                            val tailleSecteur = 1L shl (debut[8].toInt() and 0xFF)
-                            val bloc = lireA(tailleSecteur, 0x60) ?: return@use null
-                            enTete(bloc, 0, Plateforme.WII)
-                        }
-                        // CISO : les données commencent à 0x8000.
-                        magie == 0x4349534F -> {
-                            val bloc = lireA(0x8000, 0x60) ?: return@use null
-                            enTete(bloc, 0, plateformeBrute(bloc))
-                        }
-                        // GCZ (petit-boutiste) : le type est connu, le titre est compressé.
-                        ByteBuffer.wrap(debut, 0, 4).order(ByteOrder.LITTLE_ENDIAN).int == 0xB10BC001.toInt() -> {
-                            val sousType = ByteBuffer.wrap(debut, 4, 4).order(ByteOrder.LITTLE_ENDIAN).int
-                            Infos(null, null, if (sousType == 1) Plateforme.WII else Plateforme.GAMECUBE)
-                        }
-                        extension == "wad" -> Infos(null, null, Plateforme.WII)
-                        extension == "dol" || extension == "elf" -> Infos(null, null, Plateforme.INCONNUE)
-                        // ISO / GCM / NKit : en-tête en clair au début.
-                        else -> enTete(debut, 0, plateformeBrute(debut))
+                        if (lu == taille) tampon.array() else null
                     }
                 }
             }
         }.getOrNull()
+
+    /**
+     * Reconnaît le format à partir des premiers octets.
+     * @param lireA lit [taille] octets à la position donnée (null si le fichier est trop court).
+     */
+    fun analyser(
+        extension: String,
+        lireA: (Long, Int) -> ByteArray?,
+    ): Infos? {
+        val debut = lireA(0, 0x100) ?: return null
+        val magie = ByteBuffer.wrap(debut, 0, 4).order(ByteOrder.BIG_ENDIAN).int
+        return when {
+            // RVZ / WIA : l'en-tête du disque est recopié à l'octet 0x58.
+            magie == 0x52565A01 || magie == 0x57494101 -> {
+                val typeDisque = ByteBuffer.wrap(debut, 0x48, 4).order(ByteOrder.BIG_ENDIAN).int
+                val plateforme =
+                    when (typeDisque) {
+                        1 -> Plateforme.GAMECUBE
+                        2 -> Plateforme.WII
+                        else -> Plateforme.INCONNUE
+                    }
+                enTete(debut, 0x58, plateforme)
+            }
+            // WBFS (Wii uniquement) : en-tête du disque au début du 2e secteur.
+            magie == 0x57424653 -> {
+                val tailleSecteur = 1L shl (debut[8].toInt() and 0xFF)
+                val bloc = lireA(tailleSecteur, 0x60) ?: return null
+                enTete(bloc, 0, Plateforme.WII)
+            }
+            // CISO : les données commencent à 0x8000.
+            magie == 0x4349534F -> {
+                val bloc = lireA(0x8000, 0x60) ?: return null
+                enTete(bloc, 0, plateformeBrute(bloc))
+            }
+            // GCZ (petit-boutiste) : le type est connu, le titre est compressé.
+            ByteBuffer.wrap(debut, 0, 4).order(ByteOrder.LITTLE_ENDIAN).int == 0xB10BC001.toInt() -> {
+                val sousType = ByteBuffer.wrap(debut, 4, 4).order(ByteOrder.LITTLE_ENDIAN).int
+                Infos(null, null, if (sousType == 1) Plateforme.WII else Plateforme.GAMECUBE)
+            }
+            extension == "wad" -> Infos(null, null, Plateforme.WII)
+            extension == "dol" || extension == "elf" -> Infos(null, null, Plateforme.INCONNUE)
+            // ISO / GCM / NKit : en-tête en clair au début.
+            else -> enTete(debut, 0, plateformeBrute(debut))
+        }
+    }
 
     private fun plateformeBrute(octets: ByteArray): Plateforme {
         if (octets.size < 0x20) return Plateforme.INCONNUE

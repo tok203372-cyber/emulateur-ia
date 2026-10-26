@@ -30,13 +30,31 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Fabriquer l'application
-        run: ./gradlew --no-daemon --stacktrace assembleFreeDynamicRelease
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleFreeDynamicRelease 2>&1 | tee build.log
+
+      - name: Résumé des erreurs
+        if: failure()
+        run: |
+          grep -E "^e: |error:|ERROR|FAILURE|What went wrong|Could not|Exception|> Task .*FAILED" build.log | head -60 > erreurs.txt || true
+          python3 - <<'PY'
+          lignes = open("erreurs.txt", encoding="utf-8", errors="replace").read().splitlines()
+          def esc(t):
+              return t.replace("%", "%25").replace("\r", "").replace("\n", "")
+          for i in range(0, len(lignes), 6):
+              print("::error title=Erreur " + str(i // 6 + 1) + "::" + "%0A".join(esc(l) for l in lignes[i:i + 6]))
+          PY
 
       - name: Préparer le fichier
         run: |
           mkdir -p sortie
           cp lemuroid-app/build/outputs/apk/freeDynamic/release/lemuroid-app-free-dynamic-release.apk sortie/Arcadia.apk
           ls -la sortie
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          INFO=$($BT/aapt2 dump badging sortie/Arcadia.apk | grep -E "^package|sdkVersion|native-code" | tr '\n' ' ')
+          echo "::notice title=Arcadia.apk::$(du -h sortie/Arcadia.apk | cut -f1) $INFO"
+          echo "::notice title=Signature Arcadia::$($BT/apksigner verify --print-certs sortie/Arcadia.apk | grep -m1 SHA-256)"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -63,13 +81,32 @@ jobs:
 
       - name: Fabriquer l'application
         working-directory: arcadia-ia
-        run: ./gradlew --no-daemon --stacktrace assembleRelease
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee ../build.log
+
+      - name: Résumé des erreurs
+        if: failure()
+        run: |
+          grep -E "^e: |error:|ERROR|FAILURE|What went wrong|Could not|Exception|> Task .*FAILED" build.log | head -60 > erreurs.txt || true
+          python3 - <<'PY'
+          lignes = open("erreurs.txt", encoding="utf-8", errors="replace").read().splitlines()
+          def esc(t):
+              return t.replace("%", "%25").replace("\r", "").replace("\n", "")
+          for i in range(0, len(lignes), 6):
+              print("::error title=Erreur " + str(i // 6 + 1) + "::" + "%0A".join(esc(l) for l in lignes[i:i + 6]))
+          PY
 
       - name: Préparer le fichier
         run: |
           mkdir -p sortie
           cp arcadia-ia/app/build/outputs/apk/release/app-release.apk sortie/Arcadia-IA.apk
           ls -la sortie
+          BT=$(ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1)
+          INFO=$($BT/aapt2 dump badging sortie/Arcadia-IA.apk | grep -E "^package|sdkVersion|native-code" | tr '\n' ' ')
+          echo "::notice title=Arcadia-IA.apk::$(du -h sortie/Arcadia-IA.apk | cut -f1) $INFO"
+          echo "::notice title=Signature Arcadia IA::$($BT/apksigner verify --print-certs sortie/Arcadia-IA.apk | grep -m1 SHA-256)"
+          echo "::notice title=Bibliothèques IA::$(unzip -l sortie/Arcadia-IA.apk | grep -oE 'lib/arm64-v8a/[^ ]+' | tr '\n' ' ')"
 
       - uses: actions/upload-artifact@v7
         with:
