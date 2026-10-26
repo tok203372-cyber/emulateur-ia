@@ -97,9 +97,9 @@ AuroraInfo aurora_initialize(int argc, char* argv[], const AuroraConfig* config)
   (void)argv;
   g_config = *config;
   g_config.appName = copie(config->appName, "Aurora");
-  g_config.userPath = copie(config->userPath, "sdmc:/zelda-3ds/");
-  g_config.cachePath = copie(config->cachePath, "sdmc:/zelda-3ds/");
-  g_config.resourcesPath = copie(config->resourcesPath, "sdmc:/zelda-3ds/");
+  g_config.userPath = copie(config->userPath, "/zelda-3ds/");
+  g_config.cachePath = copie(config->cachePath, "/zelda-3ds/");
+  g_config.resourcesPath = copie(config->resourcesPath, "/zelda-3ds/");
   Log.info("Aurora (3DS) : MEM1 {} Mo, ARAM {} Mo", g_config.mem1Size >> 20, g_config.mem2Size >> 20);
 
   window::initialize();

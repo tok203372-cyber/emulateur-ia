@@ -59,6 +59,16 @@ lancer() {
     else
         echo "(aucun journal écrit sur la carte SD)" > "$SORTIE/journal-$nom.txt"
     fi
+    # Jeu : rapport de plantage et journaux de Dusklight
+    local dossier="$DONNEES/sdmc/zelda-3ds"
+    if [ -f "$dossier/plantage.txt" ]; then
+        mv "$dossier/plantage.txt" "$SORTIE/plantage-$nom.txt"
+    fi
+    for f in "$dossier"/*.log; do
+        [ -f "$f" ] || continue
+        head -c 300000 "$f" > "$SORTIE/dusklight-$nom-$(basename "$f")"
+        rm -f "$f"
+    done
 }
 
 if [ "$FICHIER_3DSX" != "-" ]; then

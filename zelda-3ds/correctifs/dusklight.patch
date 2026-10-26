@@ -125,6 +125,23 @@ index ac86a0ecce..2283c97768 100644
                  OSReport("[PC-OSThread] Started thread %p\n", thread);
              } else {
                  // Resume from suspension: signal the condition variable
+diff --git a/src/dusk/logging.cpp b/src/dusk/logging.cpp
+index b85635f1a5..83c6e2d29d 100644
+--- a/src/dusk/logging.cpp
++++ b/src/dusk/logging.cpp
+@@ -46,5 +46,12 @@ void dusk::InitializeLogging(
+     options.legacyFilePrefixes = {"dusk"};
+     options.divert = &divert_stub_messages;
+     standard.apply_to(options);
++#if DUSK_3DS
++    // 3DS : messages d'information et plus (affichés sur l'écran du bas), et journal écrit sur la
++    // carte SD à chaque ligne pour ne rien perdre en cas de plantage
++    options.level = borealis::LogLevel::Info;
++    options.flushOn = borealis::LogLevel::Info;
++    options.maxRetainedFiles = 5;
++#endif
+     borealis::log::init(options);
+ }
 diff --git a/src/dusk/mods/loader/loader.cpp b/src/dusk/mods/loader/loader.cpp
 index 16e52f12da..7d371822aa 100644
 --- a/src/dusk/mods/loader/loader.cpp

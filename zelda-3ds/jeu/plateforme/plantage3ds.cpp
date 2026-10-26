@@ -27,6 +27,7 @@ alignas(8) uint8_t sPileGestionnaire[0x4000];
 char sTexte[3072];
 size_t sLongueur = 0;
 std::atomic<int> sEnCours{0};
+u64 sDebut = 0;  // instant du lancement (tics du processeur)
 
 void ajouter(const char* format, ...) {
   if (sLongueur + 1 >= sizeof(sTexte)) return;
@@ -93,7 +94,8 @@ void entete(const char* quoi) {
   u32 fil = 0;
   svcGetThreadId(&fil, CUR_THREAD_HANDLE);
   ajouter("Crepuscule %s - %s\n", version(), quoi);
-  ajouter("Fil %u, temps %llu ms\n", fil, osGetTime());
+  ajouter("Fil %u, %llu s apres le lancement\n", fil,
+          static_cast<unsigned long long>((svcGetSystemTick() - sDebut) / (CPU_TICKS_PER_MSEC * 1000.0)));
 }
 
 // Erreur du processeur. libctru est compilée avec des énumérations d'un octet : on lit les mots
@@ -152,6 +154,7 @@ void installer_gestionnaire_plantage() noexcept {
 }
 
 void installer_gestionnaires_programme() noexcept {
+  sDebut = svcGetSystemTick();
   installer_gestionnaire_plantage();
   std::signal(SIGABRT, surAbort);
   std::set_terminate(surTerminate);

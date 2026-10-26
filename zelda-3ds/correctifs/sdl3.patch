@@ -1,0 +1,24 @@
+diff --git a/src/filesystem/n3ds/SDL_sysfilesystem.c b/src/filesystem/n3ds/SDL_sysfilesystem.c
+index 8a129c7..31224aa 100644
+--- a/src/filesystem/n3ds/SDL_sysfilesystem.c
++++ b/src/filesystem/n3ds/SDL_sysfilesystem.c
+@@ -71,7 +71,9 @@ char *SDL_SYS_GetUserFolder(SDL_Folder folder)
+ static char *MakePrefPath(const char *app)
+ {
+     char *pref_path;
+-    if (SDL_asprintf(&pref_path, "sdmc:/3ds/%s/", app) < 0) {
++    // 3DS (Crepuscule) : chemin sans le préfixe « sdmc: » (la carte SD est le périphérique par
++    // défaut), pour que std::filesystem le considère comme absolu
++    if (SDL_asprintf(&pref_path, "/3ds/%s/", app) < 0) {
+         return NULL;
+     }
+     return pref_path;
+@@ -79,6 +81,8 @@ static char *MakePrefPath(const char *app)
+ 
+ static bool CreatePrefPathDir(const char *pref)
+ {
++    // 3DS (Crepuscule) : crée aussi le dossier parent « /3ds » s'il n'existe pas (carte SD vide)
++    mkdir("/3ds", 0777);
+     int result = mkdir(pref, 0666);
+ 
+     if (result == -1 && errno != EEXIST) {

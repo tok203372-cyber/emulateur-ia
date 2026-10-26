@@ -7,8 +7,11 @@
 
 namespace zelda3ds {
 
-// Dossier du jeu sur la carte SD (disque, sauvegardes, réglages, journal)
-inline constexpr const char* kDossier = "sdmc:/zelda-3ds/";
+// Dossier du jeu sur la carte SD (disque, sauvegardes, réglages, journal). Sans le préfixe
+// « sdmc: » (la carte SD est le périphérique par défaut de libctru) : std::filesystem ne
+// considère comme absolus que les chemins commençant par « / » ; « sdmc:/... » serait collé au
+// dossier courant (« sdmc:/3ds/sdmc:/... »).
+inline constexpr const char* kDossier = "/zelda-3ds/";
 
 // Version du programme (commit de emulateur-ia) : affichée au démarrage et dans les rapports
 const char* version() noexcept;
