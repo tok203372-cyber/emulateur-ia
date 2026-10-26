@@ -31,6 +31,7 @@ import androidx.lifecycle.lifecycleScope
 import com.swordfish.lemuroid.app.arcadia.Enchainement
 import com.swordfish.lemuroid.app.arcadia.ProchainJeu
 import com.swordfish.lemuroid.app.arcadia.changer.CatalogueJeux
+import com.swordfish.lemuroid.app.arcadia.changer.ElementJeu
 import com.swordfish.lemuroid.app.arcadia.externe.BibliothequeExterne
 import com.swordfish.lemuroid.app.arcadia.externe.ConsolesPlusScreen
 import com.swordfish.lemuroid.app.arcadia.externe.ConsolesPlusViewModel
@@ -481,9 +482,14 @@ class MainActivity : RetrogradeComponentActivity(), BusyActivity {
                 ).show()
                 return@launch
             }
+            // Les favoris et les jeux joués récemment d'abord : l'IA ne lit qu'une partie de la liste.
+            val ordonnes =
+                jeux.sortedWith(
+                    compareByDescending<ElementJeu> { it.favori }.thenByDescending { it.dernierePartie ?: 0L },
+                )
             CompagnonIA.demanderRecommandation(
                 this@MainActivity,
-                jeux.map { CompagnonIA.JeuPropose(it.cle, it.titre, it.console) },
+                ordonnes.map { CompagnonIA.JeuPropose(it.cle, it.titre, it.console) },
             )
         }
     }

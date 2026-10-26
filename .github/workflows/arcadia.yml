@@ -40,6 +40,67 @@ jobs:
 
       - uses: actions/upload-artifact@v7
         with:
-          name: Arcadia-APK
+          name: arcadia-seul
           path: sortie/*.apk
+          if-no-files-found: error
+          retention-days: 5
+
+  arcadia-ia:
+    name: Arcadia IA (assistant)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v4
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Fabriquer l'application
+        working-directory: arcadia-ia
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
+
+      - name: Préparer le fichier
+        run: |
+          mkdir -p sortie
+          cp arcadia-ia/app/build/outputs/apk/release/app-release.apk sortie/Arcadia-IA.apk
+          ls -la sortie
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: arcadia-ia-seul
+          path: sortie/*.apk
+          if-no-files-found: error
+          retention-days: 5
+
+  paquet:
+    name: Paquet final (les deux applications)
+    runs-on: ubuntu-latest
+    needs: [arcadia, arcadia-ia]
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: paquet
+          merge-multiple: true
+
+      - name: Ajouter le mode d'emploi
+        run: |
+          cat > paquet/LISEZMOI.txt <<'FIN'
+          ARCADIA — installation rapide
+          1. Arcadia.apk     : l'émulateur (toutes les consoles, menu en jeu, traduction, voix).
+          2. Arcadia-IA.apk  : l'assistant IA (modèle de langage sur le téléphone).
+          Installez les deux avec adb :  adb install -r Arcadia.apk   puis   adb install -r Arcadia-IA.apk
+          Le guide complet pas à pas vous a été donné dans la conversation.
+          FIN
+          ls -la paquet
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: Arcadia-APK
+          path: paquet/*
           if-no-files-found: error

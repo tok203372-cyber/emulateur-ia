@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icône d'Arcadia IA : une grande étincelle (l'IA) et deux petites. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#33000000"
+        android:pathData="M51,32C53.5,45 57,48.5 70,51C57,53.5 53.5,57 51,70C48.5,57 45,53.5 32,51C45,48.5 48.5,45 51,32Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M50,30C52.5,43 56,46.5 69,49C56,51.5 52.5,55 50,68C47.5,55 44,51.5 31,49C44,46.5 47.5,43 50,30Z" />
+    <path
+        android:fillColor="#FFFFD166"
+        android:pathData="M70,28C71,33 72.5,34.5 77.5,35.5C72.5,36.5 71,38 70,43C69,38 67.5,36.5 62.5,35.5C67.5,34.5 69,33 70,28Z" />
+    <path
+        android:fillColor="#FF4FE3D0"
+        android:pathData="M68,62C68.7,65.3 69.7,66.3 73,67C69.7,67.7 68.7,68.7 68,72C67.3,68.7 66.3,67.7 63,67C66.3,66.3 67.3,65.3 68,62Z" />
+</vector>
