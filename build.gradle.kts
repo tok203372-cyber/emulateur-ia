@@ -35,7 +35,13 @@ allprojects {
     configurations.all {
         resolutionStrategy.eachDependency {
             when (requested.group) {
-                "com.google.android.gms" -> useVersion(deps.versions.gms)
+                // Arcadia : on ne force la version que pour la connexion Google Drive (variante « play »),
+                // sinon les modules d'IA locale (ML Kit) recevraient une version trop ancienne.
+                "com.google.android.gms" -> {
+                    if (requested.name.startsWith("play-services-auth")) {
+                        useVersion(deps.versions.gms)
+                    }
+                }
                 "org.jetbrains.kotlin" -> {
                     if (requested.name.startsWith("kotlin-stdlib-jre")) {
                         with(requested) {

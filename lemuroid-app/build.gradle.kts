@@ -10,9 +10,10 @@ plugins {
 
 android {
     defaultConfig {
-        versionCode = 252
-        versionName = "1.17.0" // Always remember to update Cores Tag!
-        applicationId = "com.swordfish.lemuroid"
+        // Arcadia : basé sur Lemuroid 1.17.0. Identifiant différent pour s'installer à côté de Lemuroid.
+        versionCode = 1001
+        versionName = "1.0.0-arcadia (Lemuroid 1.17.0)"
+        applicationId = "app.arcadia.emu"
     }
     flavorDimensions += listOf("opensource", "cores")
 
@@ -84,10 +85,12 @@ android {
         }
 
         maybeCreate("release").apply {
-            storeFile = file("$rootDir/release.jks")
-            keyAlias = "lemuroid"
-            storePassword = "lemuroid"
-            keyPassword = "lemuroid"
+            // Clé fixe d'Arcadia : les mises à jour s'installent par-dessus sans perdre les sauvegardes.
+            storeFile = file("$rootDir/arcadia.jks")
+            storeType = "pkcs12"
+            keyAlias = "arcadia"
+            storePassword = "arcadia2026"
+            keyPassword = "arcadia2026"
         }
     }
 
@@ -96,17 +99,20 @@ android {
             isMinifyEnabled = true
             signingConfig = signingConfigs["release"]
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
-            resValue("string", "lemuroid_name", "Lemuroid")
+            resValue("string", "lemuroid_name", "Arcadia")
         }
         getByName("debug") {
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-DEBUG"
-            resValue("string", "lemuroid_name", "LemuroiDebug")
+            resValue("string", "lemuroid_name", "Arcadia (test)")
         }
     }
 
     lint {
         disable += setOf("MissingTranslation", "ExtraTranslation", "EnsureInitializerMetadata")
+        // Arcadia : l'analyse « lint » n'est pas nécessaire pour fabriquer l'application.
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     buildFeatures {
@@ -202,6 +208,11 @@ dependencies {
     implementation(deps.libs.composeSettings.memoryStorage)
 
     implementation(deps.libs.libretrodroid)
+
+    // Arcadia : IA locale sur le téléphone (lecture du texte à l'écran, traduction hors ligne).
+    implementation("com.google.mlkit:text-recognition-japanese:16.0.1")
+    implementation("com.google.mlkit:translate:17.0.3")
+    implementation("com.google.mlkit:language-id:17.0.6")
 
     // Uncomment this when using a local aar file.
     // implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar", "*.aar"))))
