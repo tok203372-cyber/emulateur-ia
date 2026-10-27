@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+15014240	 159900	1289288	16463428	 fb3644	zelda-3ds/construction/jeu/zelda3ds.elf

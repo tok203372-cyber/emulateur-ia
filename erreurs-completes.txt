@@ -1,0 +1,2 @@
+jeu.log:[330/1727] Building C object sdl3/CMakeFiles/SDL3-static.dir/src/SDL_error.o
+jeu.log:[480/1727] Building CXX object jeu/CMakeFiles/zelda3ds.dir/__/externe/dusklight/src/d/d_error_msg.o

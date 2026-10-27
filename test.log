@@ -1,0 +1,8 @@
+make: Entering directory '/__w/emulateur-ia/emulateur-ia/zelda-3ds/test'
+vshader.v.pica
+built ... zelda3ds-test.smdh
+vshader.shbin
+main.c
+linking zelda3ds-test.elf
+built ... zelda3ds-test.3dsx
+make: Leaving directory '/__w/emulateur-ia/emulateur-ia/zelda-3ds/test'

@@ -1,0 +1,51 @@
+[0/2] Re-checking globbed directories...
+[1/50] Building shader library gx3ds_shader
+[2/50] Generating binary embedding source for gx3ds_shader
+[3/50] Building CXX object CMakeFiles/fmt3ds.dir/externe/fmt/src/format.o
+[4/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXAurora.o
+[5/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXBump.o
+[6/50] Building ASM object moteur/CMakeFiles/gx3ds_shbin.dir/.dkp-generated/gx3ds_shbin/gx3ds_shbin.o
+[7/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXCpu2Efb.o
+[8/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXCull.o
+[9/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXDispList.o
+[10/50] Linking CXX static library libfmt3ds.a
+[11/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXFifo.o
+[12/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXExtra.o
+[13/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXDraw.o
+[14/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXFrameBuffer.o
+[15/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXGet.o
+[16/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXLighting.o
+[17/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXGeometry.o
+[18/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXManage.o
+[19/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXPerf.o
+[20/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXPixel.o
+[21/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXTexture.o
+[22/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXTev.o
+[23/50] Building C object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/mtx/mtx.o
+[24/50] Building C object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/mtx/mtx44.o
+[25/50] Building C object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/mtx/mtxstack.o
+[26/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXTransform.o
+[27/50] Building C object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/mtx/mtxvec.o
+[28/50] Building C object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/mtx/quat.o
+[29/50] Building C object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/mtx/vec.o
+[30/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/vi/vi.o
+[31/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/dolphin/gx/GXVert.o
+[32/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/gx/fifo.o
+[33/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/gx/regs.o
+[34/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/gx/attr_fmt.o
+[35/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/gx/command_processor.o
+[36/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/logging.o
+[37/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/window3ds.o
+[38/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/gx/gx.o
+[39/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/thread.o
+[40/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/gx3ds/sommets.o
+[41/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/__/extern3ds/aurora/lib/aurora3ds.o
+[42/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/gx3ds/tev.o
+[43/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/gx3ds/conversion.o
+[44/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/gx3ds/rendu.o
+[45/50] Building CXX object demo-gx/CMakeFiles/demo-gx.dir/source/main.o
+[46/50] Building CXX object moteur/CMakeFiles/moteur3ds.dir/gx3ds/textures.o
+[47/50] Linking CXX static library moteur/libmoteur3ds.a
+[48/50] Linking CXX executable demo-gx/demo-gx.elf
+[49/50] Generating demo-gx.smdh
+[50/50] Building 3DSX executable target demo-gx_3dsx
