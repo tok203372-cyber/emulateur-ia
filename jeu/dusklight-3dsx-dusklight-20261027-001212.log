@@ -1,0 +1,6 @@
+[INFO | borealis::log] File logging initialized
+[INFO | dusk] Build: 3ds (rev 0, built 2026, type RelWithDebInfo)
+[INFO | dusk] Platform: 3DS
+[INFO | dusk::config] Loading config from '/zelda-3ds/config.json'
+[INFO | dusk::config] Config file did not exist, staying with defaults
+[INFO | aurora::3ds] Aurora (3DS) : MEM1 40 Mo, ARAM 16 Mo

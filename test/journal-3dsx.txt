@@ -1,0 +1,13 @@
+=== Zelda 3DS : programme de test ===
+Console : New 3DS
+Lancé comme : CIA (menu HOME)
+Mémoire de l'application : 98304 Ko (libre : 4165632 Ko)
+Mémoire linéaire libre : 31193 Ko, VRAM libre : 0 Ko
+Plus gros bloc allouable : 91 Mo
+Boucle de test : 93.6 ms (normal), 93.6 ms (mode rapide)
+Cœur 0 : utilisable (200000)
+Cœur 1 : utilisable (200000)
+Cœur 2 : utilisable (200000)
+Cœur 3 : utilisable (200000)
+Rendu prêt. START pour quitter.
+OK : 300 images en 5014 ms

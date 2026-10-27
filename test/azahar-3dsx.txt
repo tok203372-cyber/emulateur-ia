@@ -1,0 +1,110 @@
+[   0.174583] Input <Error> input_common/gcadapter/gc_adapter.cpp:Adapter:38: libusb could not be initialized. failed with error = -99
+[   0.181711] Input <Info> input_common/udp/client.cpp:StartCommunication:206: Starting communication with UDP input server on 127.0.0.1:26760
+[   0.182130] Service.FS <Error> core/file_sys/savedata_archive.cpp:OpenFile:76: Non-existing file /tmp/tmp.m0Oi7eUijb/.local/share/azahar-emu/nand/data/00000000000000000000000000000000/sysdata/00010017/00000000/config can't be open without mode create.
+[   0.182149] Service.FS <Error> core/file_sys/savedata_archive.cpp:DeleteFile:117: File not found /tmp/tmp.m0Oi7eUijb/.local/share/azahar-emu/nand/data/00000000000000000000000000000000/sysdata/00010017/00000000/config
+[   0.182266] Service.CFG <Info> core/hle/service/cfg/cfg.cpp:GetMacAddress:1110: Cannot open mac address file for read, generating a new one
+[   0.182293] Service.CFG <Error> core/hle/service/cfg/cfg.cpp:SaveMacAddress:1134: Cannot open mac address file for write
+[   0.204936] Frontend <Info> citra_qt/citra_qt.cpp:GMainWindow:462: Azahar Version: 2126.2 | HEAD-219d743
+[   0.204944] Frontend <Info> citra_qt/citra_qt.cpp:GMainWindow:467: Build Variant: N/A
+[   0.204949] Frontend <Info> citra_qt/citra_qt.cpp:GMainWindow:482: Host CPU: AMD EPYC 7763 64-Core Processor                 | AVX2 | FMA
+[   0.204974] Frontend <Info> citra_qt/citra_qt.cpp:GMainWindow:484: Host OS: Ubuntu 24.04.5 LTS
+[   0.204987] Frontend <Info> citra_qt/citra_qt.cpp:GMainWindow:487: Host RAM: 15.61 GiB
+[   0.204990] Frontend <Info> citra_qt/citra_qt.cpp:GMainWindow:488: Host Swap: 3.00 GiB
+[   0.307468] Render.Vulkan <Warning> video_core/renderer_vulkan/vk_platform.cpp:CreateInstance:333: Instance layer properties list is empty
+[   0.307803] Frontend <Error> citra_qt/util/graphics_device_info.cpp:GetVulkanPhysicalDevices:45: Error occured while querying for physical devices: vk::createInstanceUnique: ErrorIncompatibleDriver
+[   0.307829] Frontend <Info> citra_qt/citra_qt.cpp:BootGame:1495: Azahar starting...
+[   0.307954] Config <Info> common/settings.cpp:LogSettings:88: Azahar Configuration:
+[   0.307959] Config <Info> common/settings.cpp:operator():85: Core_UseCpuJit: true
+[   0.307960] Config <Info> common/settings.cpp:operator():85: Core_CPUClockPercentage: 100
+[   0.307960] Config <Info> common/settings.cpp:operator():85: Controller_UseArticController: false
+[   0.307961] Config <Info> common/settings.cpp:operator():85: Renderer_UseGLES: false
+[   0.307962] Config <Info> common/settings.cpp:operator():85: Renderer_GraphicsAPI: OpenGL
+[   0.307962] Config <Info> common/settings.cpp:operator():85: Renderer_AsyncShaders: false
+[   0.307963] Config <Info> common/settings.cpp:operator():85: Renderer_AsyncPresentation: true
+[   0.307963] Config <Info> common/settings.cpp:operator():85: Renderer_SpirvShaderGen: true
+[   0.307964] Config <Info> common/settings.cpp:operator():85: Renderer_DisableSpirvOptimizer: true
+[   0.307964] Config <Info> common/settings.cpp:operator():85: Renderer_Debug: false
+[   0.307964] Config <Info> common/settings.cpp:operator():85: Renderer_PicaDebugging: false
+[   0.307965] Config <Info> common/settings.cpp:operator():85: Renderer_UseHwShader: true
+[   0.307966] Config <Info> common/settings.cpp:operator():85: Renderer_ShadersAccurateMul: true
+[   0.307966] Config <Info> common/settings.cpp:operator():85: Renderer_UseShaderJit: true
+[   0.307967] Config <Info> common/settings.cpp:operator():85: Renderer_UseResolutionFactor: 1
+[   0.307967] Config <Info> common/settings.cpp:operator():85: Renderer_UseIntegerScaling: false
+[   0.307969] Config <Info> common/settings.cpp:operator():85: Renderer_FrameLimit: 100
+[   0.307969] Config <Info> common/settings.cpp:operator():85: Renderer_VSyncNew: true
+[   0.307970] Config <Info> common/settings.cpp:operator():85: Renderer_SkipDuplicateFrames: false
+[   0.307971] Config <Info> common/settings.cpp:operator():85: Renderer_PostProcessingShader: None (builtin)
+[   0.307972] Config <Info> common/settings.cpp:operator():85: Renderer_FilterMode: true
+[   0.307973] Config <Info> common/settings.cpp:operator():85: Renderer_TextureFilter: None
+[   0.307973] Config <Info> common/settings.cpp:operator():85: Renderer_TextureSampling: GameControlled
+[   0.307975] Config <Info> common/settings.cpp:operator():85: Renderer_DelayGameRenderThreadUs: 0
+[   0.307976] Config <Info> common/settings.cpp:operator():85: Renderer_Simulate3DSGPUTimings: false
+[   0.307976] Config <Info> common/settings.cpp:operator():85: Renderer_DisableRightEyeRender: false
+[   0.307977] Config <Info> common/settings.cpp:operator():85: Stereoscopy_Render3d: 0
+[   0.307979] Config <Info> common/settings.cpp:operator():85: Stereoscopy_Factor3d: 0
+[   0.307979] Config <Info> common/settings.cpp:operator():85: Stereoscopy_Swap_Eyes: false
+[   0.307980] Config <Info> common/settings.cpp:operator():85: Stereoscopy_Render_3d_to_which_display: 0
+[   0.307981] Config <Info> common/settings.cpp:operator():85: Stereoscopy_MonoRenderOption: 0
+[   0.307981] Config <Info> common/settings.cpp:operator():85: Layout_LayoutOption: 0
+[   0.307982] Config <Info> common/settings.cpp:operator():85: Layout_PortraitLayoutOption: 0
+[   0.307984] Config <Info> common/settings.cpp:operator():85: Layout_SecondaryDisplayLayout: 4
+[   0.307984] Config <Info> common/settings.cpp:operator():85: Layout_SwapScreen: false
+[   0.307985] Config <Info> common/settings.cpp:operator():85: Layout_UprightScreen: false
+[   0.307986] Config <Info> common/settings.cpp:operator():85: Layout_ScreenGap: 0
+[   0.307987] Config <Info> common/settings.cpp:operator():85: Layout_LargeScreenProportion: 4
+[   0.307988] Config <Info> common/settings.cpp:operator():85: Layout_SmallScreenPosition: 2
+[   0.307989] Config <Info> common/settings.cpp:operator():85: Utility_DumpTextures: false
+[   0.307991] Config <Info> common/settings.cpp:operator():85: Utility_CustomTextures: false
+[   0.307991] Config <Info> common/settings.cpp:operator():85: Utility_PreloadTextures: false
+[   0.307992] Config <Info> common/settings.cpp:operator():85: Utility_AsyncCustomLoading: true
+[   0.307992] Config <Info> common/settings.cpp:operator():85: Utility_UseDiskShaderCache: true
+[   0.307994] Config <Info> common/settings.cpp:operator():85: Audio_Emulation: HLE
+[   0.307995] Config <Info> common/settings.cpp:operator():85: Audio_OutputType: 0
+[   0.307995] Config <Info> common/settings.cpp:operator():85: Audio_OutputDevice: Auto
+[   0.307996] Config <Info> common/settings.cpp:operator():85: Audio_InputType: 0
+[   0.307996] Config <Info> common/settings.cpp:operator():85: Audio_InputDevice: Auto
+[   0.307997] Config <Info> common/settings.cpp:operator():85: Audio_EnableAudioStretching: true
+[   0.307997] Config <Info> common/settings.cpp:operator():85: Audio_EnableRealtime: false
+[   0.307997] Config <Info> common/settings.cpp:operator():85: Camera_OuterRightName: blank
+[   0.307998] Config <Info> common/settings.cpp:operator():85: Camera_OuterRightConfig: 
+[   0.307998] Config <Info> common/settings.cpp:operator():85: Camera_OuterRightFlip: 0
+[   0.307998] Config <Info> common/settings.cpp:operator():85: Camera_InnerName: blank
+[   0.307999] Config <Info> common/settings.cpp:operator():85: Camera_InnerConfig: 
+[   0.307999] Config <Info> common/settings.cpp:operator():85: Camera_InnerFlip: 0
+[   0.307999] Config <Info> common/settings.cpp:operator():85: Camera_OuterLeftName: blank
+[   0.308000] Config <Info> common/settings.cpp:operator():85: Camera_OuterLeftConfig: 
+[   0.308000] Config <Info> common/settings.cpp:operator():85: Camera_OuterLeftFlip: 0
+[   0.308000] Config <Info> common/settings.cpp:operator():85: DataStorage_UseVirtualSd: true
+[   0.308001] Config <Info> common/settings.cpp:operator():85: DataStorage_UseCustomStorage: false
+[   0.308001] Config <Info> common/settings.cpp:operator():85: System_IsNew3ds: true
+[   0.308002] Config <Info> common/settings.cpp:operator():85: System_LLEApplets: true
+[   0.308002] Config <Info> common/settings.cpp:operator():85: System_RegionValue: -1
+[   0.308002] Config <Info> common/settings.cpp:operator():85: System_PluginLoader: false
+[   0.308003] Config <Info> common/settings.cpp:operator():85: System_PluginLoaderAllowed: true
+[   0.308003] Config <Info> common/settings.cpp:operator():85: System_ApplyRegionFreePatch: true
+[   0.308003] Config <Info> common/settings.cpp:operator():85: Debugging_DelayStartForLLEModules: true
+[   0.308004] Config <Info> common/settings.cpp:operator():85: Debugging_UseGdbstub: false
+[   0.308004] Config <Info> common/settings.cpp:operator():85: Debugging_GdbstubPort: 24689
+[   0.308004] Config <Info> common/settings.cpp:operator():85: Debugging_InstantDebugLog: false
+[   0.308005] Config <Info> common/settings.cpp:operator():85: Debugging_ToggleUniqueDataConsoleType: false
+[   0.308005] Config <Info> common/settings.cpp:operator():85: Debugging_EnableExceptionHandler: false
+[   0.485281] Audio.Sink <Critical> audio_core/cubeb_sink.cpp:CubebSink:79: Error initializing cubeb stream (-1)
+[   0.486375] Service.CFG <Info> core/hle/service/cfg/cfg.cpp:GetMacAddress:1110: Cannot open mac address file for read, generating a new one
+[   0.488427] Service.FS <Error> core/file_sys/savedata_archive.cpp:OpenFile:76: Non-existing file /tmp/tmp.m0Oi7eUijb/.local/share/azahar-emu/nand/data/00000000000000000000000000000000/sysdata/00010035/00000000/news.db can't be open without mode create.
+[   0.489438] Service.HTTP <Error> core/hle/service/http/http_c.cpp:DecryptClCertA:2282: ClCertA file missing, using default
+[   0.489478] Render.OpenGL <Info> video_core/renderer_opengl/gl_driver.cpp:ReportDriverInfo:133: GL_VERSION: 4.5 (Core Profile) Mesa 25.2.8-0ubuntu0.24.04.4
+[   0.489483] Render.OpenGL <Info> video_core/renderer_opengl/gl_driver.cpp:ReportDriverInfo:134: GL_VENDOR: Mesa
+[   0.489484] Render.OpenGL <Info> video_core/renderer_opengl/gl_driver.cpp:ReportDriverInfo:135: GL_RENDERER: llvmpipe (LLVM 20.1.2, 256 bits)
+[   0.846522] Service.FS <Warning> core/file_sys/archive_selfncch.cpp:Register:255: Could not read program id when registering with SelfNCCH, this might be a 3dsx file
+[   0.859960] Core <Error> core/core.cpp:Load:518: Failed to find title id for ROM (Error 0)
+[   0.859978] Core.Cheats <Info> core/cheats/cheats.cpp:LoadCheatFile:92: Attempting to load cheats file: /tmp/tmp.m0Oi7eUijb/.local/share/azahar-emu/cheats/0000000000000000.txt
+[   0.860072] Core.Cheats <Info> core/cheats/gateway_cheat.cpp:LoadFile:491: GatewayCheat::LoadFile failed, file doesn't exist: /tmp/tmp.m0Oi7eUijb/.local/share/azahar-emu/cheats/0000000000000000.txt
+[   0.865182] Service.CAM <Info> citra_qt/camera/qt_multimedia_camera.cpp:ResumeCameras:50: Resuming all cameras
+[   0.865772] Frontend <Warning> citra_qt/citra_qt.cpp:HoldWakeLockLinux:1304: Couldn't connect to XDP D-Bus endpoint
+[   0.866200] Frontend <Warning> common/linux/gamemode.cpp:StartGamemode:15: Failed to start gamemode: dlopen failed - libgamemode.so: cannot open shared object file: No such file or directory
+[   0.917993] Service.SRV <Warning> core/hle/service/sm/srv.cpp:RegisterClient:64: (STUBBED) called. Caller PID=11
+[   0.962639] Service.APT <Warning> core/hle/service/apt/apt.cpp:NotifyToWait:362: (STUBBED) app_id=768
+[   0.963568] Service <Error> core/hle/service/service.cpp:ReportUnimplementedFunction:170: unknown / unimplemented function 'ConfigureNew3DSCPU': port='ptm:sysm' cmd_buf={[0]=0x8180040 (0x0818, 1, 0), [1]=0x0}
+[   0.963786] Service.APT <Warning> core/hle/service/apt/apt.cpp:AppletUtility:735: (STUBBED) called command=0X00000007, input_size=0X00000004, output_size=0X00000001
+[   0.963931] Service.APT <Warning> core/hle/service/apt/apt.cpp:AppletUtility:735: (STUBBED) called command=0X00000004, input_size=0X00000001, output_size=0X00000001
+[   1.664861] Service <Error> core/hle/service/service.cpp:ReportUnimplementedFunction:170: unknown / unimplemented function 'ConfigureNew3DSCPU': port='ptm:sysm' cmd_buf={[0]=0x8180040 (0x0818, 1, 0), [1]=0x3}

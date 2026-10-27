@@ -1,0 +1,48 @@
+=== Démonstration du moteur GX -> PICA200 ===
+Prêt. START pour quitter.
+dessin 241 : prim 0x90, 3 sommets, format 0, matrice 0
+  besoins : normale 0 couleur 1 textures 0 (sources 0 0 0)
+  sommet PICA : 16 octets, pos 0 nrm -1 clr 12 tex -1/-1/-1 mtx -1
+  canal 0 : 1 canaux, éclairage 0, matériau sommet/sommet, ambiante registre, atténuation 2, lumières 00
+  matériau (1.00 1.00 1.00 1.00) ambiante (0.20 0.20 0.24) ; booléens du shader 000A
+  TEV : 1 étages GX -> 1 étages PICA, approximé 0 (raison 0), unités 0
+    0 : rvb f0 src 0 F F op 0 0 0 x1 | a f0 src 0 F F op 0 0 0 x1 | k FFFFFFFF t00
+  affichage (40 0 160 120, z 0.00..1.00) ciseaux (40 0 160 120) cull 0 z 0/7/0 mélange 0
+  premier sommet : 000020430000F04100000000FF0000FF
+  position : 160.000 30.000 0.000
+dessin 242 : prim 0x80, 4 sommets, format 1, matrice 0
+  besoins : normale 0 couleur 0 textures 1 (sources 4 0 0)
+  sommet PICA : 20 octets, pos 0 nrm -1 clr -1 tex 12/-1/-1 mtx -1
+  canal 0 : 1 canaux, éclairage 0, matériau registre/registre, ambiante registre, atténuation 2, lumières 00
+  matériau (1.00 1.00 1.00 1.00) ambiante (0.20 0.20 0.24) ; booléens du shader 0000
+  TEV : 1 étages GX -> 1 étages PICA, approximé 0 (raison 0), unités 1
+    0 : rvb f0 src 3 F F op 0 0 0 x1 | a f0 src 3 F F op 0 0 0 x1 | k FFFFFFFF t00
+  affichage (200 0 160 120, z 0.00..1.00) ciseaux (200 0 160 120) cull 0 z 0/7/0 mélange 0
+  premier sommet : 0000A04200002042000000000000000000000000
+  position : 80.000 40.000 0.000
+dessin 243 : prim 0x80, 24 sommets, format 2, matrice 0
+  besoins : normale 1 couleur 1 textures 0 (sources 0 0 0)
+  sommet PICA : 28 octets, pos 0 nrm 12 clr 24 tex -1/-1/-1 mtx -1
+  canal 0 : 1 canaux, éclairage 1, matériau sommet/sommet, ambiante registre, atténuation 2, lumières 01
+  matériau (1.00 1.00 1.00 1.00) ambiante (0.20 0.20 0.24) ; booléens du shader 010B
+  TEV : 1 étages GX -> 1 étages PICA, approximé 0 (raison 0), unités 0
+    0 : rvb f0 src 0 F F op 0 0 0 x1 | a f0 src 0 F F op 0 0 0 x1 | k FFFFFFFF t00
+  affichage (40 120 160 120, z 0.00..1.00) ciseaux (40 120 160 120) cull 2 z 1/3/1 mélange 0
+  premier sommet : 000080BF000080BF0000803F00000000000000000000803FE63C3CFF
+  position : -1.000 -1.000 1.000
+dessin 244 : prim 0x80, 4 sommets, format 3, matrice 0
+  besoins : normale 0 couleur 1 textures 2 (sources 4 4 0)
+  sommet PICA : 32 octets, pos 0 nrm -1 clr 28 tex 12/20/-1 mtx -1
+  canal 0 : 1 canaux, éclairage 0, matériau sommet/sommet, ambiante registre, atténuation 2, lumières 00
+  matériau (1.00 1.00 1.00 1.00) ambiante (0.20 0.20 0.24) ; booléens du shader 000A
+  TEV : 2 étages GX -> 3 étages PICA, approximé 0 (raison 0), unités 2
+    0 : rvb f1 src 3 0 F op 0 0 0 x1 | a f0 src F F F op 0 0 0 x1 | k FFFFFFFF t00
+    1 : rvb f4 src E F 4 op 0 0 0 x1 | a f0 src F F F op 0 0 0 x1 | k FFFFFFFF t00
+    2 : rvb f0 src F F F op 0 0 0 x1 | a f0 src E F F op 0 0 0 x1 | k A0FFFFFF t00
+  affichage (200 120 160 120, z 0.00..1.00) ciseaux (200 120 160 120) cull 0 z 0/7/0 mélange 1
+  premier sommet : 000070420000F0410000000000000000000000000000000000000000FFFFFFFF
+  position : 60.000 30.000 0.000
+Image 120 : 4 dessins, 35 sommets, 18 Ko de textures, TEV approchés 0, ignorés 0
+120 images en 2100 ms
+Image 600 : 4 dessins, 35 sommets, 18 Ko de textures, TEV approchés 0, ignorés 0
+600 images en 10122 ms

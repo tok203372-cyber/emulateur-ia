@@ -1,0 +1,1 @@
+Aucune image du disque trouvee dans sdmc:/zelda-3ds/ (fichier .iso, .gcm, .ciso ou .gcz de Twilight Princess GameCube).

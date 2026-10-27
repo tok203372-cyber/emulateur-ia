@@ -1,0 +1,23 @@
+[INFO | borealis::log] File logging initialized
+[INFO | dusk] Build: 3ds (rev 0, built 2026, type RelWithDebInfo)
+[INFO | dusk] Platform: 3DS
+[INFO | dusk::config] Loading config from '/zelda-3ds/config.json'
+[INFO | dusk::config] Config file did not exist, staying with defaults
+[INFO | aurora::3ds] Aurora (3DS) : MEM1 40 Mo, ARAM 16 Mo
+[INFO | dusk] Loading DVD image: /zelda-3ds/disque-factice.iso
+[INFO | dusk] Loaded game disc is GZ2P01
+[INFO | dusk::osReport] Starting main01 (Game Loop)...
+[INFO | aurora::card] CARD API Initialized BUILT <Oct 26 2026 22:12:45>
+[INFO | aurora::input] Added controller 'Nintendo 3DS' (instance 1, vid 0000, pid 0000, type 1)
+[ERROR | aurora::card] Failed to open file: gczelda2
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
+[INFO | aurora::3ds] 60 images/s ; derniere image : 1 dessins, 4 sommets, textures 0 Ko, commandes GPU 0 %, ignores 0
