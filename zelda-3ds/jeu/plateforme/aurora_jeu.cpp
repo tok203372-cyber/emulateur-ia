@@ -16,6 +16,7 @@
 
 #include <SDL3/SDL.h>
 #include <3ds.h>
+#include <imgui.h>
 
 #include <cstring>
 #include <vector>
@@ -35,6 +36,26 @@ u64 g_debutMesure = 0;
 constexpr AuroraBackend kBackends[] = {BACKEND_OPENGLES};
 
 const char* copie(const char* texte, const char* defaut) { return strdup(texte != nullptr ? texte : defaut); }
+
+// ImGui : les fenêtres de débogage de Dusklight ne sont pas affichées sur la 3DS, mais le jeu
+// appelle ImGui à chaque image (console des outils, souris, caméra libre) : sans contexte ImGui
+// ni image ImGui en cours, ces appels liraient l'adresse 0 (plantage sur la console). On crée
+// donc un contexte avec la police intégrée, et une image ImGui par image du jeu, jamais dessinée.
+void initialiserImGui() {
+  if (ImGui::GetCurrentContext() != nullptr) return;
+  ImGui::CreateContext();
+  ImGuiIO& io = ImGui::GetIO();
+  io.IniFilename = nullptr;
+  io.LogFilename = nullptr;
+  io.DisplaySize = ImVec2(400.f, 240.f);
+  io.DeltaTime = 1.f / 30.f;
+  io.Fonts->AddFontDefault();
+  unsigned char* pixels = nullptr;
+  int largeur = 0;
+  int hauteur = 0;
+  io.Fonts->GetTexDataAsAlpha8(&pixels, &largeur, &hauteur);
+  io.Fonts->SetTexID(static_cast<ImTextureID>(1));
+}
 } // namespace
 
 namespace window {
@@ -107,6 +128,7 @@ AuroraInfo aurora_initialize(int argc, char* argv[], const AuroraConfig* config)
   window::initialize();
   gx3ds::initialiser();
   gx::fifo::init();
+  initialiserImGui();
 
   g_initialFrame = true;
   g_config.desiredBackend = kBackends[0];
@@ -138,10 +160,15 @@ const AuroraEvent* aurora_update() {
 bool aurora_begin_frame() {
   gx3ds::debut_image();
   gx::fifo::begin_frame();
+  ImGuiIO& io = ImGui::GetIO();
+  io.DeltaTime = 1.f / 30.f;
+  io.DisplaySize = ImVec2(400.f, 240.f);
+  ImGui::NewFrame();
   return true;
 }
 
 void aurora_end_frame() {
+  ImGui::Render();  // termine l'image ImGui (rien n'est affiché)
   gx::fifo::drain();
   gx::fifo::end_frame();
   gx3ds::fin_image();

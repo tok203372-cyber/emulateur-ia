@@ -301,14 +301,28 @@ jobs:
         id: demarrage
         if: ${{ !cancelled() && hashFiles('fabrique/zelda3ds.cia') != '' }}
         run: |
+          ok=1
           # Sans image du disque, le jeu doit arriver jusqu'au message « Aucune image du disque »
           if grep -q "Aucune image du disque" resultats/jeu/journal-3dsx.txt 2>/dev/null; then
-            echo "::notice title=Jeu::Le jeu démarre jusqu'à la recherche du disque"
-            echo "ok=1" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Jeu::Sans disque : le jeu démarre jusqu'à la recherche du disque"
           else
-            echo "::error title=Jeu::Le jeu ne démarre pas jusqu'à la recherche du disque"
-            exit 1
+            echo "::error title=Jeu::Sans disque : le jeu ne démarre pas jusqu'à la recherche du disque"
+            ok=0
           fi
+          # Avec le disque factice (CIA), la boucle du jeu doit tourner (mesures « images/s » du
+          # journal) sans aucun accès mémoire invalide (sur la console, ce serait un plantage)
+          if grep -qs "images/s" resultats/jeu/dusklight-cia-*.log; then
+            echo "::notice title=Jeu::Disque factice : la boucle du jeu tourne"
+          else
+            echo "::error title=Jeu::Disque factice : la boucle du jeu ne tourne pas"
+            ok=0
+          fi
+          if [ -s resultats/jeu/pc-cia.txt ]; then
+            echo "::error title=Jeu::Disque factice : accès mémoire invalides (voir adresses-cia.txt)"
+            ok=0
+          fi
+          [ "$ok" = 1 ] || exit 1
+          echo "ok=1" >> "$GITHUB_OUTPUT"
 
       - name: Publier la version d'essai (page Releases)
         if: ${{ !cancelled() && steps.demarrage.outputs.ok == '1' }}
